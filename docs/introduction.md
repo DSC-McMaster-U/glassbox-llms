@@ -15,4 +15,4 @@ Since embeddings are designed to be a 'computer-translation' of human text, they
 
 Additionally, all the nonlinearity added by activation functions can cause outputs that have no or very complex connection to its inputs, even if the activation function itself is mathematically defined via a formula or algorithm.
 
-Therefore, using the weights of a model, we can examine *how* the model works, as in its mechanisms and sequence of operations. But, it is incredibly difficult to reverse-engineer what features the model cares about, how those are weighted, and in which dimensions.
+Finally, the model learns patterns from huge amounts of data. This leads to emergent behavior and connections that are not apparent to humans or visible by direct observation.
