@@ -101,15 +101,17 @@ Validate that plotting functions run without exceptions and return a matplotlib.
 
 Avoid rendering-heavy tests (mock plt.show()).
 
-# 3. Module Independence & Architecture
+<pre>
 +-------------------+       +----------------+       +----------------+
 |   GlassModel      |-----> |   GlassProbe   |-----> |   GlassViz     |
-|  (model wrapper)  |       |  (representation tests) | (visual tools)|
+|  (model wrapper)  |       | (representation tests) | (visual tools) |
 +-------------------+       +----------------+       +----------------+
            ↑                        ↑                        ↑
            |                        |                        |
            |     (interfaces only)  |     (interfaces only)  |
-           +------------------------+-------------------------+
+           +------------------------+------------------------+
+</pre>
+
 
 
 
