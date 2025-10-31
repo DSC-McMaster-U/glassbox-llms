@@ -1,105 +1,106 @@
-🧠 Glassbox Library Design Document
+
 # 1. Overview
 
 The Glassbox Library provides a modular, lightweight, and framework-agnostic foundation for exploring LLM interpretability. Its architecture prioritizes:
 
-Independence between modules
+## Independence between modules
 
-Extensibility for future research directions
+- Extensibility for future research directions
 
-Testability — all modules can be unit tested in isolation
+- Testability — all modules can be unit tested in isolation
 
-Minimal external dependencies, relying only on standard Python and NumPy/matplotlib where necessary
+- Minimal external dependencies, relying only on standard Python and NumPy/matplotlib where necessary
 
-The code entry point (e.g., main.py or cli.py) can integrate with models, datasets, or APIs, but the core modules must remain agnostic to them.
+- The code entry point (e.g., main.py or cli.py) can integrate with models, datasets, or APIs, but the core modules must remain agnostic to them.
 
 # 2. Core Modules
-## 🧩 GlassModel
+## GlassModel
 
-Purpose:
+### Purpose:
+
 Provides a generic interface for model abstraction, activation extraction, and causal experimentation.
 
-Responsibilities:
+### Responsibilities:
 
-Manage hooks to extract activations from arbitrary model layers.
+- Manage hooks to extract activations from arbitrary model layers.
 
-Provide a consistent API for forward passes, activation capture, and patching.
+- Provide a consistent API for forward passes, activation capture, and patching.
 
-Stay independent of any specific framework (e.g., PyTorch, TensorFlow).
+- Stay independent of any specific framework (e.g., PyTorch, TensorFlow).
 
-Optional adapters (e.g., HuggingFace) should live in glassbox.adapters.
+- Optional adapters (e.g., HuggingFace) should live in glassbox.adapters.
 
-Design Principles:
+### Design Principles:
 
-Define only abstract data flow: encode() → forward() → get_activations().
+- Define only abstract data flow: encode() → forward() → get_activations().
 
-Accept generic tensor types (np.ndarray, torch.Tensor, etc.) via typing.Union.
+- Accept generic tensor types (np.ndarray, torch.Tensor, etc.) via typing.Union.
 
-Support lightweight dependency injection for model backends.
+- Support lightweight dependency injection for model backends.
 
-Testability:
+### Testability:
 
-Use mock models (simple linear or dictionary-based) for unit tests.
+- Use mock models (simple linear or dictionary-based) for unit tests.
 
-Verify logic of hooks, activation caching, and patching without real networks.
+- Verify logic of hooks, activation caching, and patching without real networks.
 
-## 🔍 GlassProbe
+## GlassProbe
 
-Purpose:
-Implements probe interfaces for testing hypotheses about what information is represented in activations.
+### Purpose:
+- Implements probe interfaces for testing hypotheses about what information is represented in activations.
 
-Responsibilities:
+### Responsibilities:
 
-Provide a clean, dependency-light probe API: fit(), predict(), evaluate().
+- Provide a clean, dependency-light probe API: fit(), predict(), evaluate().
 
-Support any backend (NumPy, scikit-learn, PyTorch) via adapter registration.
+- Support any backend (NumPy, scikit-learn, PyTorch) via adapter registration.
 
-Remain independent of both GlassModel and external datasets.
+- Remain independent of both GlassModel and external datasets.
 
-Design Principles:
+### Design Principles:
 
-Treat probes as pluggable components — linear classifiers by default.
+- Treat probes as pluggable components — linear classifiers by default.
 
-Expose metrics as return values (accuracy, F1, mutual information).
+- Expose metrics as return values (accuracy, F1, mutual information).
 
-Avoid coupling to specific feature shapes or tokenizers.
+- Avoid coupling to specific feature shapes or tokenizers.
 
-Testability:
+### Testability:
 
-Use synthetic activations (NumPy arrays) and labels to verify training logic.
+- Use synthetic activations (NumPy arrays) and labels to verify training logic.
 
-Ensure reproducible results without relying on model weights.
+- Ensure reproducible results without relying on model weights.
 
-## 🎨 GlassViz
+## GlassViz
 
-Purpose:
+### Purpose:
 Provide visualization utilities for attention, attribution, and activation distributions.
 
-Responsibilities:
+### Responsibilities:
 
-Offer standardized plotting functions for interpretability outputs:
+- Offer standardized plotting functions for interpretability outputs:
 
-attention_map()
+- attention_map()
 
-attribution_heatmap()
+- attribution_heatmap()
 
-activation_hist()
+- activation_hist()
 
-Stay independent of modeling frameworks and only depend on matplotlib.
+- Stay independent of modeling frameworks and only depend on matplotlib.
 
-Design Principles:
+### Design Principles:
 
-Pure visualization — no model calls.
+- Pure visualization — no model calls.
 
-Accept simple Python lists or arrays; return figure handles for testability.
+- Accept simple Python lists or arrays; return figure handles for testability.
 
-All visuals should be reproducible and usable in notebooks or dashboards.
+- All visuals should be reproducible and usable in notebooks or dashboards.
 
-Testability:
+### Testability:
 
-Validate that plotting functions run without exceptions and return a matplotlib.Figure.
+- Validate that plotting functions run without exceptions and return a matplotlib.Figure.
 
-Avoid rendering-heavy tests (mock plt.show()).
+- Avoid rendering-heavy tests (mock plt.show()).
 
 <pre>
 +-------------------+       +----------------+       +----------------+
@@ -124,13 +125,19 @@ Optional integrations live in glassbox/adapters/ (for HF, OpenAI, etc.).
 Tests live in tests/ and mock only internal logic.
 
 # 4. Development & Testing Best Practices
-Principle	Implementation
-Loose Coupling	Avoid direct imports between modules (e.g., GlassProbe never calls GlassModel).
-Dependency Injection	Allow backend objects (e.g., models, datasets) to be passed at runtime.
-Unit Testing	Mock external dependencies; test pure logic and data flow.
-Linter/Formatter	Use ruff for linting and black/PEP8 conventions.
-Type Checking	Enforce mypy strictness for clean API boundaries.
-Documentation	Each module includes docstrings and usage examples.
+### Principle	Implementation
+
+***Loose Coupling:*** Avoid direct imports between modules (e.g., GlassProbe never calls GlassModel).
+
+***Dependency Injection:*** Allow backend objects (e.g., models, datasets) to be passed at runtime.
+
+***Unit Testing:*** Mock external dependencies; test pure logic and data flow.
+
+***Linter/Formatter:***	Use ruff for linting and black/PEP8 conventions.
+
+***Type Checking:*** Enforce mypy strictness for clean API boundaries.
+
+***Documentation:*** Each module includes docstrings and usage examples.
 
 # 5. Example Usage (Conceptual)
 from glassbox import GlassModel, GlassProbe, GlassViz
