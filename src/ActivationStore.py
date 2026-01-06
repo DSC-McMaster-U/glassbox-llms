@@ -4,22 +4,19 @@ from typing import Dict, List, Optional, Union, Any
 from collections import defaultdict
 
 class ActivationStore:
-    # This structure can store, index, and retrieve activations.
+    # this structure can store, index, and retrieve activations.
 
-    def __init__(self, device: str = "cpu", storage_dir: Optional[str] = None):
-        # initializes object
-        # todo: evaluate value of putting this on the gpu if available
-
+    def __init__(self, device: str = "cpu", storage_dir: str = "activations", precision: torch.dtype = torch.float16):
         self.device = device
         self.storage_dir = storage_dir
+        self.precision = precision
 
-        # note that practically speaking you should probably pipe this to a .safetensors at a certain size
         self._data: Dict[str, List[torch.Tensor]] = defaultdict(list)
-
         self._metadata: Dict[str, List[int]] = defaultdict(list)
 
-        if self.storage_dir and not os.path.exists(self.storage_dir):
+        if not os.path.exists(self.storage_dir):
             os.makedirs(self.storage_dir)
+
 
     def save(self, layer_name: str, activations: torch.Tensor, token_idx: Optional[int] = None):
 
@@ -65,3 +62,23 @@ class ActivationStore:
             "metadata": dict(self._metadata)
         }
         torch.save(load, os.path.join(self.storage_dir or ".", filename))
+
+    def __repr__(self) -> str:
+        return f"ActivationStore(layers={list(self._data.keys())}, device='{self.device}')"
+
+    def __str__(self) -> str:
+        num_layers = len(self._data)
+        layer_names = list(self._data.keys())
+
+        return (f"ActivationStore(device='{self.device}', num_layers={num_layers}, layers_names={layer_names})")
+
+if __name__ == "__main__":
+    store = ActivationStore()
+
+    mock_acts = torch.randn(1, 512)
+
+    store.save("mlp.0", activations=mock_acts, token_idx=5)
+
+    acts = store.get("mlp.0")
+    print(f"shape: {acts.shape}")
+    print(store)
