@@ -2,43 +2,92 @@ import torch
 import os
 from typing import Dict, List, Optional, Union, Any
 from collections import defaultdict
+import uuid
+
+try:
+    HAS_SAFETENSORS = True
+    from safetensors.torch import save_file, load_file
+except ImportError:
+    HAS_SAFETENSORS = False
 
 class ActivationStore:
     # this structure can store, index, and retrieve activations.
 
-    def __init__(self, device: str = "cpu", storage_dir: str = "activations", precision: torch.dtype = torch.float16):
+    def __init__(self, device: str = "cpu", storage_dir: str = "./activations", buffer_size: int = 1000):
         self.device = device
         self.storage_dir = storage_dir
-        self.precision = precision
+        self.buffer_size = buffer_size
 
-        self._data: Dict[str, List[torch.Tensor]] = defaultdict(list)
-        self._metadata: Dict[str, List[int]] = defaultdict(list)
+        # layer_name -> list of tensors
+        self._buffer: Dict[str, List[torch.Tensor]] = defaultdict(list)
+
+        # layer_name -> token_idx -> list of buffer indices
+        self._metadata_index: Dict[str, Dict[int, List[int]]] = defaultdict(lambda: defaultdict(list))
+
+        # track saved files to reload them later if needed
+        self._disk_manifest: Dict[str, List[str]] = defaultdict(list)
 
         if not os.path.exists(self.storage_dir):
             os.makedirs(self.storage_dir)
 
+    def _flush_layer(self, layer_name: str):
+        if not self._buffer[layer_name]:
+            return
+
+        # put the tensors in a stack for efficiency
+        tensor_stack = torch.stack(self._buffer[layer_name])
+
+        # todo: other way to get unique identifiers?
+        filename = f"{layer_name}_{uuid.uuid4().hex}.pt"
+        filepath = os.path.join(self.storage_dir, filename)
+
+        if HAS_SAFETENSORS:
+            # Safetensors requires a dict of tensors
+            save_file({layer_name: tensor_stack}, filepath.replace(".pt", ".safetensors"))
+            self._disk_manifest[layer_name].append(filepath.replace(".pt", ".safetensors"))
+        else:
+            torch.save(tensor_stack, filepath)
+            self._disk_manifest[layer_name].append(filepath)
+
+        # clear memory
+        self._buffer[layer_name].clear()
+        self._metadata_index[layer_name].clear()
 
     def save(self, layer_name: str, activations: torch.Tensor, token_idx: Optional[int] = None):
+        # detach
+        acts = activations.detach().to(self.device)
 
-        # we move the graph to the cpu and out of memory
-        acts = activations.detach().to(self.device).clone()
+        # add to the buffer
+        self._buffer[layer_name].append(acts)
+        current_idx = len(self._buffer[layer_name]) - 1
 
-        self._data[layer_name].append(acts)
+        # metadata indexing
         if token_idx is not None:
-            self._metadata[layer_name].append(token_idx)
+            self._metadata_index[layer_name][token_idx].append(current_idx)
 
-    def get(self, layer_name: str, concat: bool = True) -> Union[torch.Tensor, List[torch.Tensor]]:
-        # gets activations for a layer
-        # concat allows you to merge the retrieved tensors into one big tensor
+        if len(self._buffer[layer_name]) >= self.buffer_size:
+                    self._flush_layer(layer_name)
 
-        if layer_name not in self._data:
-            raise KeyError(f"No activations found for layer: {layer_name}")
+    def get_all(self, layer_name: str) -> torch.Tensor:
+        # simple getter to stitch together from the disk for a layer
 
-        acts_list = self._data[layer_name]
+        parts = []
 
-        if concat:
-            return torch.cat(acts_list, dim=0)
-        return acts_list
+        if layer_name in self._disk_manifest:
+            for filepath in self._disk_manifest[layer_name]:
+                if HAS_SAFETENSORS and filepath.endswith(".safetensors"):
+                    parts.append(load_file(filepath)[layer_name])
+                else:
+                    parts.append(torch.load(filepath, map_location=self.device))
+
+        if self._buffer[layer_name]:
+            parts.append(torch.stack(self._buffer[layer_name]))
+
+        if not parts:
+            # ?
+            return torch.empty(0)
+
+        return torch.cat(parts, dim=0)
 
     def get_by_token(self, layer_name: str, token_idx: int) -> torch.Tensor:
         # gets activations for a (token) index
@@ -51,8 +100,9 @@ class ActivationStore:
         return torch.cat(acts, dim=0)
 
     def clear(self):
-        self._data.clear()
-        self._metadata.clear()
+        self._buffer.clear()
+        self._metadata_index.clear()
+        # maybe clear the blob st files
 
     def persist_to_disk(self, filename: str):
         # save data to disk
@@ -64,13 +114,30 @@ class ActivationStore:
         torch.save(load, os.path.join(self.storage_dir or ".", filename))
 
     def __repr__(self) -> str:
-        return f"ActivationStore(layers={list(self._data.keys())}, device='{self.device}')"
+        return (f"ActivationStore(device='{self.device}', storage_dir='{self.storage_dir}', buffer_size={self.buffer_size}, tracked_layers={len(self._buffer) + len(self._disk_manifest)})")
 
     def __str__(self) -> str:
-        num_layers = len(self._data)
-        layer_names = list(self._data.keys())
+        temp = [f"---", f"ActivationStore(device={self.device}, physical_path={self.storage_dir}, buffer_limit={self.buffer_size}/layer)"]
 
-        return (f"ActivationStore(device='{self.device}', num_layers={num_layers}, layers_names={layer_names})")
+        all_layers = set(self._buffer.keys()) | set(self._disk_manifest.keys())
+
+        if not all_layers:
+            temp.append("\n  (No data stored)")
+            return "\n".join(temp)
+
+        # fancy data table display
+        temp.append("\n  {:<25} | {:<15} | {:<15}".format("Layer Name", "Buffer (RAM)", "Disk Files"))
+        temp.append("  " + "-"*61)
+
+        for layer in sorted(all_layers):
+            ram_count = len(self._buffer.get(layer, []))
+            disk_count = len(self._disk_manifest.get(layer, []))
+
+            # todo: if buffer is full/near full, maybe flag it?
+            temp.append(f"  {layer:<25} | {ram_count:<15} | {disk_count:<15}")
+
+        temp.append("---")
+        return "\n".join(temp)
 
 if __name__ == "__main__":
     store = ActivationStore()
@@ -79,6 +146,6 @@ if __name__ == "__main__":
 
     store.save("mlp.0", activations=mock_acts, token_idx=5)
 
-    acts = store.get("mlp.0")
+    acts = store.get_all("mlp.0")
     print(f"shape: {acts.shape}")
     print(store)
