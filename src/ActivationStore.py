@@ -130,10 +130,10 @@ class ActivationStore:
         # save data to disk
 
         load = {
-            "data": dict(self._data),
-            "metadata": dict(self._metadata)
+            "data": dict(self._buffer),
+            "metadata": dict(self._metadata_index)
         }
-        torch.save(load, os.path.join(self.storage_dir or ".", filename))
+        torch.save(load, os.path.join(self.storage_dir, filename))
 
     def __repr__(self) -> str:
         return (f"ActivationStore(device='{self.device}', storage_dir='{self.storage_dir}', buffer_size={self.buffer_size}, tracked_layers={len(self._buffer) + len(self._disk_manifest)})")
