@@ -79,7 +79,7 @@ class ActivationStore:
             self._metadata_index[layer_name][token_idx].append(current_idx)
 
         if len(self._buffer[layer_name]) >= self.buffer_size:
-                    self._flush_layer(layer_name)
+            self._flush_layer(layer_name)
 
     def get_all(self, layer_name: str) -> torch.Tensor:
         # simple getter to stitch together from the disk for a layer
@@ -104,14 +104,22 @@ class ActivationStore:
         return torch.cat(parts, dim=0)
 
     def get_by_token(self, layer_name: str, token_idx: int) -> torch.Tensor:
-        # gets activations for a (token) index
+        if layer_name not in self._metadata_index:
+            return torch.empty(0)
 
-        indices = [i for (i, idx) in enumerate(self._metadata[layer_name]) if (idx == token_idx)]
+        indices = self._metadata_index[layer_name].get(token_idx, [])
+
         if not indices:
             return torch.empty(0)
 
-        acts = [self._data[layer_name][i] for i in indices]
-        return torch.cat(acts, dim=0)
+        # !!! NOTE: THIS ONLY WORKS FOR STUFF IN RAM!!!!! NOT CACHED DATA ON DISK
+        acts = [self._buffer[layer_name][i] for i in indices]
+
+        if not acts:
+            # ?
+            return torch.empty(0)
+
+        return torch.stack(acts)
 
     def clear(self):
         self._buffer.clear()
