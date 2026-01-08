@@ -1,6 +1,6 @@
 import torch
 import os
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Optional, Union, Any, Callable
 from collections import defaultdict
 import uuid
 
@@ -42,7 +42,7 @@ class ActivationStore:
         filepath = os.path.join(self.storage_dir, filename)
 
         if HAS_SAFETENSORS:
-            # Safetensors requires a dict of tensors
+            # safetensors wants a tensor dict
             save_file({layer_name: tensor_stack}, filepath.replace(".pt", ".safetensors"))
             self._disk_manifest[layer_name].append(filepath.replace(".pt", ".safetensors"))
         else:
@@ -52,6 +52,19 @@ class ActivationStore:
         # clear memory
         self._buffer[layer_name].clear()
         self._metadata_index[layer_name].clear()
+
+    def create_hook(self, layer_name: str, token_idx: Optional[int] = None) -> Callable:
+        # returns a pytorch hook
+        # is this even necessary??
+
+        def hook(module, input, output):
+            # handle output being a tuple (transformers can do this sometimes)
+            if isinstance(output, tuple):
+                out_tensor = output[0]
+            else:
+                out_tensor = output
+            self.save(layer_name, out_tensor, token_idx)
+        return hook
 
     def save(self, layer_name: str, activations: torch.Tensor, token_idx: Optional[int] = None):
         # detach
@@ -76,6 +89,7 @@ class ActivationStore:
         if layer_name in self._disk_manifest:
             for filepath in self._disk_manifest[layer_name]:
                 if HAS_SAFETENSORS and filepath.endswith(".safetensors"):
+                    # ignore your linter here, it's being unreasonable. ignore the error
                     parts.append(load_file(filepath)[layer_name])
                 else:
                     parts.append(torch.load(filepath, map_location=self.device))
@@ -142,10 +156,11 @@ class ActivationStore:
 if __name__ == "__main__":
     store = ActivationStore()
 
-    mock_acts = torch.randn(1, 512)
+    a = torch.randn(1, 512)
 
-    store.save("mlp.0", activations=mock_acts, token_idx=5)
+    store.save("mlp.0", activations=a, token_idx=5)
 
     acts = store.get_all("mlp.0")
     print(f"shape: {acts.shape}")
     print(store)
+    print(store.create_hook("mlp.0"))
