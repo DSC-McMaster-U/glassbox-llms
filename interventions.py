@@ -25,26 +25,26 @@ def patch_activation(model, layer, new_value, text):
         ...     text="Hello world!"
         ... )
     """
-    # 1. Get the target module to patch
+    # 1) Get the target module to patch
     target_module = model.get_layer_module(layer)
     
-    # 2. Define the patching hook function
+    # 2) Define the patching hook function
     def patch_hook(module, input, output):
         """Hook that replaces module output with new_value."""
         # Ensure new_value is on correct device
         return new_value.to(output.device)
     
-    # 3. Attach the hook using model's HookManager
+    # 3) Attach the hook using model's HookManager
     hook_id = model.hook_manager.add_hook(
         module=target_module,
         hook_fn=patch_hook
     )
     
-    # 4. Run forward pass with hook active
+    # 4) Run forward pass with hook active
     try:
         patched_output = model.forward(text)
     finally:
-        # 5. Always clean up the hook
+        # 5) Always clean up the hook
         model.hook_manager.remove_hook(hook_id)
     
     return patched_output
