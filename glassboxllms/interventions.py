@@ -48,3 +48,4 @@ def patch_activation(model, layer, new_value, text):
         model.hook_manager.remove_hook(hook_id)
     
     return patched_output
+
