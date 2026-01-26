@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import unittest
 from unittest.mock import MagicMock, patch
 import torch
-from glassboxllms.interventions import patch_activation
+from glassboxllms.instrumentation.interventions import patch_activation
 
 class TestPatchActivation(unittest.TestCase):
     """

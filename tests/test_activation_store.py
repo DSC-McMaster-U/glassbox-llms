@@ -2,7 +2,7 @@ import pytest
 import torch
 import os
 import shutil
-from ActivationStore import ActivationStore, HAS_SAFETENSORS
+from tests.test_activation_store import ActivationStore, HAS_SAFETENSORS
 
 TEST_DIR = "./test_activations"
 LAYER_NAME = "transformer.layer.0.mlp"
