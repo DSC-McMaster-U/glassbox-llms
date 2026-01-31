@@ -33,4 +33,7 @@ python -m probes.examples.pca_structure
 
 # Gender concept direction (CAV)
 python -m probes.examples.cav_gender
+
+# Demonstration of when non-linear probes outperform linear probes
+python -m probes.examples.nonlinear_superiority
 ```

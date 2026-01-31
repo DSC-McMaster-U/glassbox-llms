@@ -23,6 +23,7 @@ probes/
 ├── __init__.py           # Package exports
 ├── base.py               # BaseProbe abstract class + ProbeResult dataclass
 ├── linear.py             # LinearProbe implementation (logistic, linear, PCA, CAV)
+├── nonlinear.py          # nonLinearProbe implementation
 ├── activation_store.py   # Extract activations from transformer models
 └── README.md             # This file
 ```
@@ -58,6 +59,9 @@ python -m probes.examples.logistic_sentiment
 python -m probes.examples.linear_intensity
 python -m probes.examples.pca_structure
 python -m probes.examples.cav_gender
+
+# Non-linear probe examples
+python -m probes.examples.nonlinear_superiority
 ```
 
 ### Basic Usage
@@ -108,6 +112,29 @@ LinearProbe(
     regularization: float = 1.0,
     max_iter: int = 1000,
     incremental: bool = False,  # For large datasets
+)
+```
+
+### `NonLinearProbe`
+
+Multi-Layer Perceptron (MLP) probe for detecting non-linearly encoded information.
+
+```python
+NonLinearProbe(
+    layer: str,                    # Target layer (e.g., "mlp.10")
+    direction: str,                # Concept name (e.g., "syntax_depth")
+    target: Optional[str] = None,
+    hidden_dim: Optional[int] = None,
+    hidden_dims: List[int] = [512, 256],  # Hidden layer sizes for MLP
+    is_classification: bool = True,       # True for classification, False for regression
+    learning_rate_init: float = 1e-3,
+    max_iter: int = 200,
+    early_stopping: bool = True,
+    validation_fraction: float = 0.1,
+    n_iter_no_change: int = 10,
+    random_state: int = 42,
+    normalize: bool = True,
+    robust_scaling: bool = True,   # Use RobustScaler for outliers
 )
 ```
 
