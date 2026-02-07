@@ -1,15 +1,8 @@
-"""
-Feature data model for the Feature Atlas.
-
-This module defines the core data structures for representing discovered
-features in neural networks, including neurons, attention heads, SAE latents,
-probe directions, and circuits.
-"""
-
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from enum import Enum, auto
 from typing import Any, Optional, Dict, List, Union
+import uuid
 
 class FeatureType(Enum):
     """
@@ -32,13 +25,13 @@ class Location:
     """
     The location of a feature within the specific model architecture
 
-    ATTRIBUTES
-        model_name: Name/identifier of the model (e.g. "llama-2-7b")
-        layer: Layer identifier (e.g. "attention.5")
-        sublayer: Optional sublayer specification (e.g. "attn_pattern")
-        neuron_idx: Optional neuron idx for neuron-level things
-        head_idx: Optional head idx for attention features
-        position: Optional token position if it's position-specific (e.g., "last")
+    USAGE
+        model_name: name/identifier of the model (e.g. "llama-2-7b")
+        layer: layer identifier (e.g. "attention.5")
+        sublayer: optional sublayer specification (e.g. "attn_pattern")
+        neuron_idx: optional neuron idx for neuron-level things
+        head_idx: optional head idx for attention features
+        position: optional token position if it's position-specific (e.g., "last")
     """
     model_name: str
     layer: str
@@ -57,11 +50,24 @@ class Location:
             parts.append(f"head={self.head_idx}")
         if self.position:
             parts.append(f"position='{self.position}'")
-        return f"Location({', '.join(parts)})"
+        return f"<Location object {', '.join(parts)}>"
 
 @dataclass
 class History:
-    # todo
+    method: str
+    dataset: str
+    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+    tool_version: Optional[str] = None
+    hyperparameters: Optional[Dict[str, Any]] = None
+    author: Optional[str] = None
+
+    def __repr__(self) -> str:
+        parts = [f"method='{self.method}'", f"dataset='{self.dataset}'"]
+        if self.tool_version:
+            parts.append(f"version='{self.tool_version}'")
+        if self.author:
+            parts.append(f"by='{self.author}'")
+        return f"<History object {', '.join(parts)}>"
 
 
 
