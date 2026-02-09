@@ -144,10 +144,7 @@ class Atlas:
         if isinstance(feature_type, str):
             feature_type = FeatureType(feature_type)
 
-        return [
-            f for f in self._features.values()
-            if f.feature_type == feature_type
-        ]
+        return [f for f in self._features.values() if f.feature_type == feature_type]
 
     def find_by_layer(self, layer: str, exact: bool = False) -> List[Feature]:
         """
@@ -233,6 +230,7 @@ class Atlas:
     # --- PERSISTENCE/SAVE/LOADING ---
 
     def to_dict(self) -> Dict[str, Any]:
+        # todo: perhaps make it clearer on the dir's format this will save to
         return {
             "metadata": self.metadata.to_dict(),
             "features": [f.to_dict() for f in self._features.values()],
@@ -380,5 +378,5 @@ class Atlas:
         return f"<Atlas '{name}' with {len(self._features)} features>"
 
     def __str__(self) -> str:
-        # This could technically just be the same as __repr__
+        # todo: this could technically just be the same as __repr__
         return self.summary()
