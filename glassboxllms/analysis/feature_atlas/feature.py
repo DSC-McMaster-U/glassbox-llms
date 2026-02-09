@@ -125,7 +125,10 @@ class Feature:
 
     def to_dict(self) -> Dict[str, Any]:
         # serializes Feature to dict
-        return asdict(self)
+        data = asdict(self)
+        # Convert FeatureType enum to string for JSON/YAML compatibility
+        data["feature_type"] = self.feature_type.value
+        return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Feature":
