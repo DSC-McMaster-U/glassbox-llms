@@ -55,7 +55,6 @@ class ActivationStore:
 
     def create_hook(self, layer_name: str, token_idx: Optional[int] = None) -> Callable:
         # returns a pytorch hook
-        # is this even necessary??
 
         def hook(module, input, output):
             # handle output being a tuple (transformers can do this sometimes)
@@ -89,7 +88,7 @@ class ActivationStore:
         if layer_name in self._disk_manifest:
             for filepath in self._disk_manifest[layer_name]:
                 if HAS_SAFETENSORS and filepath.endswith(".safetensors"):
-                    # ignore your linter here, it's being unreasonable. ignore the error
+                    # ignore the linter error here
                     parts.append(load_file(filepath)[layer_name])
                 else:
                     parts.append(torch.load(filepath, map_location=self.device))
@@ -98,7 +97,6 @@ class ActivationStore:
             parts.append(torch.stack(self._buffer[layer_name]))
 
         if not parts:
-            # ?
             return torch.empty(0)
 
         return torch.cat(parts, dim=0)
@@ -112,11 +110,10 @@ class ActivationStore:
         if not indices:
             return torch.empty(0)
 
-        # !!! NOTE: THIS ONLY WORKS FOR STUFF IN RAM!!!!! NOT CACHED DATA ON DISK
+        # !!! NOTE: THIS WILL ONLY WORK DATA IN RAM!!!!! NOT CACHED DATA ON DISK
         acts = [self._buffer[layer_name][i] for i in indices]
 
         if not acts:
-            # ?
             return torch.empty(0)
 
         return torch.stack(acts)
