@@ -16,9 +16,9 @@ Expected Results:
 - Thousands of interpretable SAE features registered to Atlas
 
 Usage:
-    python -m examples.sae_experiment.full_pipeline
+    python -m glassboxllms.experiments.sae.experiment
     or
-    python examples/sae_experiment/full_pipeline.py
+    python glassboxllms/experiments/sae/experiment.py
 """
 
 import torch
@@ -31,11 +31,13 @@ from pathlib import Path
 
 # Handle imports for both execution methods
 try:
-    from glassboxllms.experiments import SAEExperiment
+    from glassboxllms.experiments.sae import SAEExperiment
     from glassboxllms.analysis.feature_atlas import Atlas
 except ImportError:
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-    from glassboxllms.experiments import SAEExperiment
+    # Add project root to path when running directly
+    project_root = Path(__file__).parent.parent.parent.parent
+    sys.path.insert(0, str(project_root))
+    from glassboxllms.experiments.sae import SAEExperiment
     from glassboxllms.analysis.feature_atlas import Atlas
 
 
@@ -137,10 +139,10 @@ def main():
     MODEL_NAME = "gpt2"
     TARGET_LAYER = "transformer.h.11.mlp"  # Layer 11 MLP output
     D_SAE = 16384  # 16x expansion (GPT-2 has 768 hidden dim)
-    K = 64  # ~0.4% sparsity
+    K = 32  # Reduce from 64 to get L0 < 50
     SPARSITY_ALPHA = 0.1  # Auxiliary loss coefficient
-    N_ACTIVATIONS = 50000  # Number of activations to collect
-    N_EPOCHS = 10
+    N_ACTIVATIONS = 10000  # Increase from 500 (config says 50k but dataset only has 500)
+    N_EPOCHS = 20  # Increase from 10 for better convergence
     BATCH_SIZE = 256
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
     
@@ -181,7 +183,7 @@ def main():
     # Create DataLoader
     dataloader = create_dataloader(
         tokenizer,
-        num_texts=500,
+        num_texts=2000,  # Increase from 500 to get more activations
         batch_size=8,
         max_length=128
     )
