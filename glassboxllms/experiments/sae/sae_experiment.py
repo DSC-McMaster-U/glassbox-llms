@@ -323,12 +323,22 @@ class SAEExperiment:
         
         r2 = self.stats.get("final_explained_variance", 0.0)
         mean_l0 = self.stats.get("mean_l0", float('inf'))
-        dead_count = self.stats.get("dead_feature_count", self.d_sae)
+        dead_count = self.stats.get("dead_feature_count", 0)  
+        
+        if "dead_feature_count" not in self.stats:
+            with torch.no_grad():
+                W_dec = self.sae.W_dec.detach().cpu()
+                norms = torch.norm(W_dec, dim=1, p=2)
+                dead_count = (norms < 1e-6).sum().item()
+                self.stats["dead_feature_count"] = dead_count
+        
+        dead_percentage = dead_count / self.d_sae
+        print(f"    Dead features: {dead_count}/{self.d_sae} ({dead_percentage*100:.1f}%)")
         
         criteria = {
             "high_reconstruction": r2 > 0.7,
             "sparse_activations": mean_l0 < 50,
-            "low_dead_features": (dead_count / self.d_sae) < 0.1
+            "low_dead_features": dead_percentage < 0.1  # Less than 10%
         }
         
         return criteria

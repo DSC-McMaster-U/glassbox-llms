@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from glassboxllms.experiments import SAEExperiment
+from glassboxllms.experiments.sae import SAEExperiment
 from glassboxllms.analysis.feature_atlas import Atlas, FeatureType
 
 

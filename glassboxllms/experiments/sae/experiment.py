@@ -139,11 +139,11 @@ def main():
     MODEL_NAME = "gpt2"
     TARGET_LAYER = "transformer.h.11.mlp"  # Layer 11 MLP output
     D_SAE = 16384  # 16x expansion (GPT-2 has 768 hidden dim)
-    K = 32  # Reduce from 64 to get L0 < 50
-    SPARSITY_ALPHA = 0.1  # Auxiliary loss coefficient
-    N_ACTIVATIONS = 10000  # Increase from 500 (config says 50k but dataset only has 500)
-    N_EPOCHS = 20  # Increase from 10 for better convergence
-    BATCH_SIZE = 256
+    K = 32  # Number of active features for TopK mode (auto-computed if None)
+    SPARSITY_ALPHA = 0.15  # Auxiliary loss coefficient
+    N_ACTIVATIONS = 10000  # Number of activations to collect
+    N_EPOCHS = 30  # Number of epochs to train for
+    BATCH_SIZE = 256  # Batch size for training
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
     
     print(f"\nConfiguration:")
