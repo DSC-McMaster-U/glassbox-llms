@@ -90,6 +90,10 @@ SAEExperiment(
 )
 ```
 
+## TopK: “Only k features can be on” → fixed sparsity; auxiliary loss trains the features that are never on by making them explain the leftover error.
+
+## L1: “You can use any features, but we penalize how much you use” → learned sparsity; no auxiliary loss, just reconstruction + L1 penalty.
+
 **Key Methods:**
 
 - **`collect_activations(dataloader, num_samples, pooling="mean")`**  

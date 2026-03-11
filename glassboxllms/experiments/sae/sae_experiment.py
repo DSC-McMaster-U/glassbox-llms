@@ -197,7 +197,7 @@ class SAEExperiment:
         Returns:
             Activations tensor of shape (num_samples, input_dim)
         """
-        print(f"[1/4] Collecting {num_samples} activations from layer '{self.layer}'...")
+        print(f"Collecting {num_samples} activations from layer '{self.layer}'...")
         
         hook_manager = HookManager(self.model)
         store = ActivationStore(device=self.device, buffer_size=1000)
@@ -271,7 +271,7 @@ class SAEExperiment:
         Returns:
             Training statistics dictionary
         """
-        print(f"\n[2/4] Training SAE ({n_epochs} epochs, batch_size={batch_size})...")
+        print(f"Training SAE ({n_epochs} epochs, batch_size={batch_size})...")
         
         # Initialize with geometric median
         print("    Initializing with geometric median...")
@@ -302,7 +302,7 @@ class SAEExperiment:
         print(f"    ✓ Training complete")
         print(f"      Explained variance: {self.stats['final_explained_variance']:.3f}")
         print(f"      Mean L0: {self.stats.get('mean_l0', 'N/A')}")
-        print(f"      Dead features: {self.stats.get('dead_feature_count', 'N/A')}")
+        print(f"      Dead features: {self.stats.get('dead_features', 'N/A')}")
         
         return self.stats
     
@@ -361,7 +361,7 @@ class SAEExperiment:
         if not self.trained:
             raise RuntimeError("Must train SAE before extracting features. Call train() first.")
         
-        print(f"\n[3/4] Extracting features from trained SAE...")
+        print(f"Extracting features from trained SAE...")
         
         features = []
         W_dec = self.sae.W_dec.detach().cpu()
@@ -432,7 +432,7 @@ class SAEExperiment:
         Returns:
             Atlas with registered features
         """
-        print(f"\n[4/4] Registering features to Atlas...")
+        print(f"Registering features to Atlas...")
         
         # Extract features
         features = self.extract_features(skip_dead=skip_dead, dataset_name=dataset_name)
@@ -504,7 +504,6 @@ class SAEExperiment:
             "layer": self.layer,
         }
         torch.save(checkpoint, path)
-        print(f"Saved checkpoint to {path}")
     
     def __repr__(self) -> str:
         status = "trained" if self.trained else "untrained"
