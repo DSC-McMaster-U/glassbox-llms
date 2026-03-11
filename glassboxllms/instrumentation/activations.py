@@ -1,171 +1,254 @@
-import torch
+"""
+ActivationStore — Buffered activation storage with optional disk persistence.
+
+Stores captured activations in RAM with automatic flushing to disk when
+the buffer exceeds a configurable threshold.  Supports token-level indexing
+and SafeTensors serialization when available.
+
+This is the *storage engine* — it does not know how to extract activations
+from a model.  See :class:`ActivationExtractor` for the extraction pipeline.
+
+Usage::
+
+    from glassboxllms.instrumentation import ActivationStore
+
+    store = ActivationStore(buffer_size=500)
+    store.save("encoder.layer.6", activation_tensor, token_idx=3)
+    all_acts = store.get_all("encoder.layer.6")
+"""
+
+from __future__ import annotations
+
 import os
-from typing import Dict, List, Optional, Union, Any, Callable
-from collections import defaultdict
 import uuid
+from collections import defaultdict
+from typing import Callable, Dict, List, Optional
+
+import torch
 
 try:
+    from safetensors.torch import load_file, save_file
+
     HAS_SAFETENSORS = True
-    from safetensors.torch import save_file, load_file
 except ImportError:
     HAS_SAFETENSORS = False
 
-class ActivationStore:
-    # this structure can store, index, and retrieve activations.
 
-    def __init__(self, device: str = "cpu", storage_dir: str = "./activations", buffer_size: int = 1000):
+class ActivationStore:
+    """
+    Buffer and persist activation tensors by layer name.
+
+    Args:
+        device: Device for in-memory tensors (``"cpu"`` by default).
+        storage_dir: Directory for disk-flushed activations.
+        buffer_size: Per-layer capacity before flushing to disk.
+    """
+
+    def __init__(
+        self,
+        device: str = "cpu",
+        storage_dir: str = "./activations",
+        buffer_size: int = 1000,
+    ):
         self.device = device
         self.storage_dir = storage_dir
         self.buffer_size = buffer_size
 
-        # layer_name -> list of tensors
+        # layer_name -> list of tensors (RAM buffer)
         self._buffer: Dict[str, List[torch.Tensor]] = defaultdict(list)
 
         # layer_name -> token_idx -> list of buffer indices
-        self._metadata_index: Dict[str, Dict[int, List[int]]] = defaultdict(lambda: defaultdict(list))
+        self._token_index: Dict[str, Dict[int, List[int]]] = defaultdict(
+            lambda: defaultdict(list)
+        )
 
-        # track saved files to reload them later if needed
+        # layer_name -> list of file paths (flushed to disk)
         self._disk_manifest: Dict[str, List[str]] = defaultdict(list)
 
-        if not os.path.exists(self.storage_dir):
-            os.makedirs(self.storage_dir)
+        os.makedirs(self.storage_dir, exist_ok=True)
 
-    def _flush_layer(self, layer_name: str):
-        if not self._buffer[layer_name]:
-            return
+    # ── Write ────────────────────────────────────────────────────
 
-        # put the tensors in a stack for efficiency
-        tensor_stack = torch.stack(self._buffer[layer_name])
+    def save(
+        self,
+        layer_name: str,
+        activations: torch.Tensor,
+        token_idx: Optional[int] = None,
+    ) -> None:
+        """
+        Store an activation tensor for *layer_name*.
 
-        # todo: other way to get unique identifiers?
-        filename = f"{layer_name}_{uuid.uuid4().hex}.pt"
-        filepath = os.path.join(self.storage_dir, filename)
+        Automatically flushes to disk when the buffer is full.
 
-        if HAS_SAFETENSORS:
-            # safetensors wants a tensor dict
-            save_file({layer_name: tensor_stack}, filepath.replace(".pt", ".safetensors"))
-            self._disk_manifest[layer_name].append(filepath.replace(".pt", ".safetensors"))
-        else:
-            torch.save(tensor_stack, filepath)
-            self._disk_manifest[layer_name].append(filepath)
-
-        # clear memory
-        self._buffer[layer_name].clear()
-        self._metadata_index[layer_name].clear()
-
-    def create_hook(self, layer_name: str, token_idx: Optional[int] = None) -> Callable:
-        # returns a pytorch hook
-
-        def hook(module, input, output):
-            # handle output being a tuple (transformers can do this sometimes)
-            if isinstance(output, tuple):
-                out_tensor = output[0]
-            else:
-                out_tensor = output
-            self.save(layer_name, out_tensor, token_idx)
-        return hook
-
-    def save(self, layer_name: str, activations: torch.Tensor, token_idx: Optional[int] = None):
-        # detach
+        Args:
+            layer_name: Layer that produced the activation.
+            activations: The activation tensor to store.
+            token_idx: Optional token position for indexed retrieval.
+        """
         acts = activations.detach().to(self.device)
 
-        # add to the buffer
         self._buffer[layer_name].append(acts)
-        current_idx = len(self._buffer[layer_name]) - 1
+        buf_idx = len(self._buffer[layer_name]) - 1
 
-        # metadata indexing
         if token_idx is not None:
-            self._metadata_index[layer_name][token_idx].append(current_idx)
+            self._token_index[layer_name][token_idx].append(buf_idx)
 
         if len(self._buffer[layer_name]) >= self.buffer_size:
             self._flush_layer(layer_name)
 
+    def create_hook(
+        self,
+        layer_name: str,
+        token_idx: Optional[int] = None,
+    ) -> Callable:
+        """
+        Return a PyTorch forward hook that pushes activations into this store.
+
+        Args:
+            layer_name: Key under which to store the captured output.
+            token_idx: Optional token position for indexed retrieval.
+        """
+
+        def hook(module: torch.nn.Module, input: object, output: object) -> None:
+            tensor = output[0] if isinstance(output, tuple) else output
+            self.save(layer_name, tensor, token_idx)
+
+        return hook
+
+    # ── Read ─────────────────────────────────────────────────────
+
     def get_all(self, layer_name: str) -> torch.Tensor:
-        # simple getter to stitch together from the disk for a layer
+        """
+        Retrieve all activations for *layer_name* (RAM + disk).
 
-        parts = []
+        Returns:
+            Concatenated tensor of shape ``(n, ...)``, or ``torch.empty(0)``
+            if nothing has been stored.
+        """
+        parts: List[torch.Tensor] = []
 
-        if layer_name in self._disk_manifest:
-            for filepath in self._disk_manifest[layer_name]:
-                if HAS_SAFETENSORS and filepath.endswith(".safetensors"):
-                    # ignore the linter error here
-                    parts.append(load_file(filepath)[layer_name])
-                else:
-                    parts.append(torch.load(filepath, map_location=self.device))
+        # Reload from disk
+        for filepath in self._disk_manifest.get(layer_name, []):
+            if HAS_SAFETENSORS and filepath.endswith(".safetensors"):
+                parts.append(load_file(filepath)[layer_name])
+            else:
+                parts.append(
+                    torch.load(filepath, map_location=self.device, weights_only=True)
+                )
 
+        # In-memory buffer
         if self._buffer[layer_name]:
             parts.append(torch.stack(self._buffer[layer_name]))
 
         if not parts:
             return torch.empty(0)
-
         return torch.cat(parts, dim=0)
 
     def get_by_token(self, layer_name: str, token_idx: int) -> torch.Tensor:
-        if layer_name not in self._metadata_index:
-            return torch.empty(0)
+        """
+        Retrieve activations for a specific token position.
 
-        indices = self._metadata_index[layer_name].get(token_idx, [])
+        .. note::
+            Token-level indexing only covers data still in the RAM buffer.
+            Flushed-to-disk data loses token-level granularity.
 
+        Returns:
+            Stacked tensor or ``torch.empty(0)`` if not found.
+        """
+        indices = self._token_index.get(layer_name, {}).get(token_idx, [])
         if not indices:
             return torch.empty(0)
 
-        # !!! NOTE: THIS WILL ONLY WORK DATA IN RAM!!!!! NOT CACHED DATA ON DISK
-        acts = [self._buffer[layer_name][i] for i in indices]
-
+        buf = self._buffer.get(layer_name, [])
+        acts = [buf[i] for i in indices if i < len(buf)]
         if not acts:
             return torch.empty(0)
-
         return torch.stack(acts)
 
-    def clear(self):
+    @property
+    def layer_names(self) -> List[str]:
+        """All layer names that have stored data."""
+        return sorted(set(self._buffer.keys()) | set(self._disk_manifest.keys()))
+
+    # ── Lifecycle ────────────────────────────────────────────────
+
+    def clear(self) -> None:
+        """Clear all in-memory data (does not delete disk files)."""
         self._buffer.clear()
-        self._metadata_index.clear()
-        # maybe clear the blob st files
+        self._token_index.clear()
 
-    def persist_to_disk(self, filename: str):
-        # save data to disk
+    def flush(self) -> None:
+        """Force-flush all in-memory buffers to disk."""
+        for layer in list(self._buffer.keys()):
+            self._flush_layer(layer)
 
-        load = {
-            "data": dict(self._buffer),
-            "metadata": dict(self._metadata_index)
+    def persist(self, filename: str) -> str:
+        """
+        Save all in-memory data to a single file and return the path.
+
+        Args:
+            filename: Name of the output file (saved inside *storage_dir*).
+        """
+        filepath = os.path.join(self.storage_dir, filename)
+        payload = {
+            "data": {k: torch.stack(v) for k, v in self._buffer.items() if v},
         }
-        torch.save(load, os.path.join(self.storage_dir, filename))
+        torch.save(payload, filepath)
+        return filepath
+
+    # ── Internals ────────────────────────────────────────────────
+
+    def _flush_layer(self, layer_name: str) -> None:
+        if not self._buffer[layer_name]:
+            return
+
+        tensor_stack = torch.stack(self._buffer[layer_name])
+
+        # Sanitize layer name for filesystem (dots → dashes)
+        safe_name = layer_name.replace(".", "-").replace("/", "-")
+        filename = f"{safe_name}_{uuid.uuid4().hex[:8]}"
+
+        if HAS_SAFETENSORS:
+            filepath = os.path.join(self.storage_dir, f"{filename}.safetensors")
+            save_file({layer_name: tensor_stack}, filepath)
+        else:
+            filepath = os.path.join(self.storage_dir, f"{filename}.pt")
+            torch.save(tensor_stack, filepath)
+
+        self._disk_manifest[layer_name].append(filepath)
+        self._buffer[layer_name].clear()
+        self._token_index[layer_name].clear()
+
+    # ── Display ──────────────────────────────────────────────────
 
     def __repr__(self) -> str:
-        return (f"ActivationStore(device='{self.device}', storage_dir='{self.storage_dir}', buffer_size={self.buffer_size}, tracked_layers={len(self._buffer) + len(self._disk_manifest)})")
+        n_layers = len(set(self._buffer.keys()) | set(self._disk_manifest.keys()))
+        return (
+            f"ActivationStore(device='{self.device}', "
+            f"storage_dir='{self.storage_dir}', "
+            f"buffer_size={self.buffer_size}, "
+            f"tracked_layers={n_layers})"
+        )
 
     def __str__(self) -> str:
-        temp = [f"---", f"ActivationStore(device={self.device}, physical_path={self.storage_dir}, buffer_limit={self.buffer_size}/layer)"]
+        lines = [
+            f"ActivationStore(device={self.device}, "
+            f"path={self.storage_dir}, "
+            f"buffer_limit={self.buffer_size}/layer)",
+        ]
 
-        all_layers = set(self._buffer.keys()) | set(self._disk_manifest.keys())
-
+        all_layers = sorted(
+            set(self._buffer.keys()) | set(self._disk_manifest.keys())
+        )
         if not all_layers:
-            temp.append("\n  (No data stored)")
-            return "\n".join(temp)
+            lines.append("  (empty)")
+            return "\n".join(lines)
 
-        # fancy data table display
-        temp.append("\n  {:<25} | {:<15} | {:<15}".format("Layer Name", "Buffer (RAM)", "Disk Files"))
-        temp.append("  " + "-"*61)
+        lines.append(f"  {'Layer':<30} {'RAM':>8} {'Disk':>8}")
+        lines.append("  " + "-" * 48)
+        for layer in all_layers:
+            ram = len(self._buffer.get(layer, []))
+            disk = len(self._disk_manifest.get(layer, []))
+            lines.append(f"  {layer:<30} {ram:>8} {disk:>8}")
 
-        for layer in sorted(all_layers):
-            ram_count = len(self._buffer.get(layer, []))
-            disk_count = len(self._disk_manifest.get(layer, []))
-
-            # todo: if buffer is full/near full, maybe flag it?
-            temp.append(f"  {layer:<25} | {ram_count:<15} | {disk_count:<15}")
-
-        temp.append("---")
-        return "\n".join(temp)
-
-if __name__ == "__main__":
-    store = ActivationStore()
-
-    a = torch.randn(1, 512)
-
-    store.save("mlp.0", activations=a, token_idx=5)
-
-    acts = store.get_all("mlp.0")
-    print(f"shape: {acts.shape}")
-    print(store)
-    print(store.create_hook("mlp.0"))
+        return "\n".join(lines)

@@ -14,6 +14,9 @@ dependencies = [
     "transformers>=4.30.0",
 ]
 
+[project.scripts]
+glassbox = "glassboxllms.cli.main:main"
+
 [project.optional-dependencies]
 viz = ["manim>=0.18.0"]
 dev = ["pytest>=7.0"]

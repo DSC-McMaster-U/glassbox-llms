@@ -12,11 +12,13 @@ from typing import Any, Dict, List, Type
 
 from glassboxllms.experiments.base import BaseExperiment, ExperimentResult
 from glassboxllms.experiments.cot_faithfulness.experiment import CoTFaithfulnessExperiment
+from glassboxllms.experiments.logit_lens import LogitLensExperiment
 from glassboxllms.experiments.probing import ProbingExperiment
 
 # Central registry — add new experiments here
 _REGISTRY: Dict[str, Type[BaseExperiment]] = {
     "cot_faithfulness": CoTFaithfulnessExperiment,
+    "logit_lens": LogitLensExperiment,
     "probing": ProbingExperiment,
 }
 

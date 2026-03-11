@@ -1,51 +1,79 @@
-# glassboxllms/interventions.py
-# Implemented by Ankita Sharma (GitHub: sharmaankita3387)
-# Part of GDSC Research Project
-# Date: January 12, 2026
+"""
+Activation patching — replace a layer's output for one forward pass.
 
-def patch_activation(model, layer, new_value, text):
-    """
-    Temporarily replace a layer's output with new_value for one forward pass.
-    
-    Args:
-        model: A ModelWrapper instance (with hook_manager and get_layer_module)
-        layer: String identifier for the layer (e.g., "mlp.10")
-        new_value: Tensor to use as the layer's output (must match shape)
-        text: Input text to process
-    
-    Returns:
-        Model output with the patch applied
-    
-    Example:
-        >>> from glassboxllms.interventions import patch_activation
-        >>> patched_output = patch_activation(
-        ...     model,
-        ...     layer="mlp.10",
-        ...     new_value=tensor,
-        ...     text="Hello world!"
-        ... )
-    """
-    # 1) Get the target module to patch
-    target_module = model.get_layer_module(layer)
-    
-    # 2) Define the patching hook function
-    def patch_hook(module, input, output):
-        """Hook that replaces module output with new_value."""
-        # Ensure new_value is on correct device
-        return new_value.to(output.device)
-    
-    # 3) Attach the hook using model's HookManager
-    hook_id = model.hook_manager.add_hook(
-        module=target_module,
-        hook_fn=patch_hook
+Originally by Ankita Sharma. Rewritten to work directly with any
+``nn.Module`` or ``TransformersModelWrapper`` via standard PyTorch hooks
+(no ``hook_manager`` attribute required on the model).
+
+Usage::
+
+    from glassboxllms.instrumentation.activation_patching import patch_activation
+
+    patched = patch_activation(
+        model.model,                 # raw nn.Module
+        layer="transformer.h.5",
+        new_value=replacement_tensor,
+        inputs=tokenized_input,
     )
-    
-    # 4) Run forward pass with hook active
-    try:
-        patched_output = model.forward(text)
-    finally:
-        # 5) Always clean up the hook
-        model.hook_manager.remove_hook(hook_id)
-    
-    return patched_output
+"""
 
+from typing import Any, Dict, Optional, Union
+
+import torch
+import torch.nn as nn
+
+
+def patch_activation(
+    model: nn.Module,
+    layer: str,
+    new_value: torch.Tensor,
+    inputs: Union[Dict[str, torch.Tensor], str, Any],
+    *,
+    wrapper: Optional[Any] = None,
+) -> Any:
+    """
+    Run one forward pass with *layer*'s output replaced by *new_value*.
+
+    Args:
+        model: Raw ``nn.Module`` **or** the inner ``.model`` from a wrapper.
+        layer: Named module path (e.g. ``"transformer.h.5"``).
+        new_value: Tensor to substitute.  Must be broadcastable to the
+            layer's output shape.
+        inputs: Tokenized input dict (``input_ids``, ``attention_mask``, …)
+            **or** raw text if *wrapper* is provided.
+        wrapper: Optional ``TransformersModelWrapper`` — if provided,
+            *inputs* can be a text string and the wrapper handles
+            tokenization.
+
+    Returns:
+        Model output with the patch applied.
+    """
+    # Resolve the target module
+    modules_dict = dict(model.named_modules())
+    if layer not in modules_dict:
+        raise ValueError(f"Layer '{layer}' not found in model.")
+    target_module = modules_dict[layer]
+
+    # Build the patching hook
+    def patch_hook(module, inp, output):
+        device = output.device if isinstance(output, torch.Tensor) else output[0].device
+        patched = new_value.to(device=device)
+        if isinstance(output, tuple):
+            return (patched,) + output[1:]
+        return patched
+
+    # Attach, forward, clean up
+    handle = target_module.register_forward_hook(patch_hook)
+    try:
+        if wrapper is not None and isinstance(inputs, str):
+            patched_output = wrapper.forward(inputs)
+        elif isinstance(inputs, dict):
+            with torch.no_grad():
+                patched_output = model(**inputs)
+        else:
+            with torch.no_grad():
+                patched_output = model(inputs)
+    finally:
+        handle.remove()
+
+    return patched_output
