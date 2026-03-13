@@ -274,22 +274,27 @@ def min_length(
     return min_length_function(dataset)
 
 
-def apply_transform(
+from typing import Any, Callable, Iterable, List
+
+
+def apply_transforms(
     dataset,
-    transform_fn: Callable[[Any], Any],
+    transform_fns: Iterable[Callable[[str], str]],
     text_column: str = "text",
 ) -> Any:
     """
-    Applies a custom transformation function to text.
+    Applies a sequence of transformation functions to text in daisy-chain order.
 
     Args:
         dataset: The HuggingFace dataset to transform
-        transform_fn: A function that takes a string and returns a transformed string
+        transform_fns: A list/iterable of functions to apply in order
         text_column: Name of the column containing text to transform
 
     Returns:
         Dataset with transformed text
     """
+    # Convert to list to facilitate iteration
+    fns = list(transform_fns)
 
     def transform_function(examples):
         transformed_texts = []
@@ -297,8 +302,13 @@ def apply_transform(
         for text in examples[text_column]:
             if text is None:
                 transformed_texts.append(None)
-            else:
-                transformed_texts.append(transform_fn(str(text)))
+                continue
+
+            # apply functions in sequence
+            val = str(text)
+            for fn in fns:
+                val = fn(val)
+            transformed_texts.append(val)
 
         examples[text_column] = transformed_texts
         return examples
