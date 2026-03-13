@@ -484,7 +484,7 @@ Here's a complete example showing multiple transforms in action:
       },
       "columns": ["text", "label"],
       "clean_text": {
-        "text_column": "text",
+        "text_column": "text, label",
         "lowercase": true,
         "remove_special_chars": true,
         "normalize_whitespace": true
@@ -501,7 +501,7 @@ Here's a complete example showing multiple transforms in action:
       },
       "num_samples": {
         "count": 1000,
-        "seed": 42,
+        "seed": 67,
         "shuffle": true
       }
     }
@@ -549,15 +549,8 @@ When multiple transforms are configured, they are executed in this order:
 
 ## Tips
 
-- **Character vs Token Limits**: Use `max_length`/`min_length` for character-based limits or `max_tokens`/`min_tokens` for token-based limits. Token-based limits take priority.
+- **Character vs Token Limits**: Use `max_length`/`min_length` for character-based limits or `max_tokens`/`min_tokens` for token-based limits. **Token-based limits take priority**.
 - **Order Matters**: The order of transforms is fixed. Plan your preprocessing pipeline accordingly.
-- **Sampling**: Use `num_samples` for quick testing, but remember it samples before most other transforms.
+- **Sampling**: Use `num_samples` for quick testing, but remember it samples before other transforms!.
 - **Column Selection**: Use `columns` to reduce memory usage by keeping only necessary columns.
-- **Text Cleaning**: `clean_text` and `normalize_text` can be used together for comprehensive text normalization.
-
-## Troubleshooting
-
-- **Transform not applied?** Check that the correct key is present in your `preprocess` configuration.
-- **Wrong order?** Remember that transforms are applied in a fixed order, not the order they appear in the config.
-- **Token limits not working?** Ensure `max_tokens` or `min_tokens` is specified, not just `max_length` or `min_length`.
-- **Column not found?** Make sure to use `rename_columns` before referencing columns by their new names.
+- **Text Cleaning**: `clean_text` and `normalize_text` are designed to be used together.
