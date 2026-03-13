@@ -11,17 +11,17 @@ MODEL_REGISTRY = {
 
 
 def create_model_wrapper(
-    model_name: str, checkpoint: str, device: str = "cuda", dtype: str = "float16"
+    wrapper_type: str, checkpoint: str, device: str = "cuda", dtype: str = "float16"
 ) -> ModelWrapper:
-    if model_name not in MODEL_REGISTRY:
+    if wrapper_type not in MODEL_REGISTRY:
         raise ValueError(
-            f"Unknown model type: {model_name}! Available: {list(MODEL_REGISTRY.keys())}"
+            f"Unknown wrapper type: {wrapper_type}! Available: {list(MODEL_REGISTRY.keys())}"
         )
 
-    wrapper_class = MODEL_REGISTRY[model_name]
+    wrapper_class = MODEL_REGISTRY[wrapper_type]
 
     # this must be expanded EVERY TIME you expand the registry
-    if model_name == "transformers":
+    if wrapper_type == "transformers":
         wrapper = wrapper_class(checkpoint)
         wrapper.model.to(device)
         if dtype == "float16":

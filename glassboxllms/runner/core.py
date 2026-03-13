@@ -1,12 +1,13 @@
 import importlib
 import logging
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 # careful of relative imports
 from ..models.base import ModelWrapper
 from ..models.factory import create_model_wrapper
 from .config import Config
+from .preprocessing import start_preprocess
 from .tracking import get_tracker
 
 
@@ -26,7 +27,7 @@ class Runner:
             f"Attempting model load {self.cfg.model.name} ({self.cfg.model.checkpoint})"
         )
         self.model = create_model_wrapper(
-            model_name=self.cfg.model.name,
+            wrapper_type="transformers",
             checkpoint=self.cfg.model.checkpoint,
             device=self.cfg.model.device,
             dtype=self.cfg.model.dtype,
@@ -40,11 +41,9 @@ class Runner:
 
     def _load_dataset(self):
         from datasets import load_dataset
-        from torch.utils.data import DataLoader, Dataset
 
         dataset_path = self.cfg.dataset.path
         split = self.cfg.dataset.split
-        preprocess_config = self.cfg.dataset.preprocess
         dataset: Any = None
 
         try:
@@ -55,34 +54,13 @@ class Runner:
             logging.warning(
                 f"Could not load as HF dataset: {e}. Attempting local load..."
             )
-
             dataset_type = Path(dataset_path).suffix
             if dataset_type in ["csv", "json", "parquet", "arrow", "hdf5"]:
                 dataset = load_dataset(dataset_type, dataset_path)
 
-        # if preprocessing is required by the dataset
-        if preprocess_config and self.model and hasattr(self.model, "tokenizer"):
-            max_length = preprocess_config.get("max_length", 512)
-            truncation = preprocess_config.get("truncation", True)
-            padding = preprocess_config.get("padding", "max_length")
-
-            def tokenize_function(examples):
-                # not 100% sure this is accurate
-                text_column = "text" if "text" in examples else "input"
-                return self.model.tokenizer(
-                    examples[text_column],
-                    max_length=max_length,
-                    truncation=truncation,
-                    padding=padding,
-                    return_tensors="pt",
-                )
-
-            dataset = dataset.map(tokenize_function, batched=True)
-        elif preprocess_config and self.model and not hasattr(self.model, "tokenizer"):
-            logging.warning(
-                "Preprocessing requested but model has no tokenizer... "
-                "Skipping tokenization. Experiment may need to handle preprocessing!"
-            )
+        # apply preprocessing based on config
+        if self.cfg.dataset.preprocess:
+            dataset = start_preprocess(dataset, self.cfg)
 
         return dataset
 
@@ -102,6 +80,8 @@ class Runner:
                     f"Experiment {self.cfg.experiment.type} does not have a 'run_experiment' function."
                 )
 
+            # TODO: see if we need a kwargs or if this is all
+            # the data any experiment will possibly need
             experiment_module.run_experiment(
                 cfg=self.cfg,
                 model=self.model,
