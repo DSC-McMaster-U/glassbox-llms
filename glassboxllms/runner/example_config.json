@@ -1,0 +1,41 @@
+{
+  "model": {
+    "name": "llama-3.3-8b",
+    "checkpoint": "meta-llama/Meta-Llama-3.3-8B",
+    "device": "cuda",
+    "dtype": "float16",
+    "wrapper_type": "transformers"
+  },
+  "_todo": "MAKE SURE DATASET/EXPERIMENT FORMAT IS CORRECT",
+  "dataset": {
+    "path": "data/my_dataset",
+    "split": "train",
+    "preprocess": {
+      "max_length": 512,
+      "padding": "max_length"
+    }
+  },
+  "experiment": {
+    "type": "dummy",
+    "parameters": {
+      "lr": 2e-5,
+      "bsz": 8,
+      "time": 3
+    },
+    "seed": 0
+  },
+  "tracking": {
+    "enabled": true,
+    "type": "wandb",
+    "project": "example-project",
+    "entity": "awesome-team",
+    "tags": ["llama", "baseline"],
+    "config": {
+      "optimizer": "adamw-8bit"
+    }
+  },
+  "output": {
+    "base_dir": "runs/",
+    "name": "run-001"
+  }
+}
