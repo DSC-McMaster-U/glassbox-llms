@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 class ModelConfig(BaseModel):
     name: str
     checkpoint: str
+    wrapper_type: str = "transformers"
     device: str = "cuda"
     dtype: str = "float16"
 

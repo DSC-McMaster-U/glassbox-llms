@@ -3,7 +3,8 @@
     "name": "llama-3.3-8b",
     "checkpoint": "meta-llama/Meta-Llama-3.3-8B",
     "device": "cuda",
-    "dtype": "float16"
+    "dtype": "float16",
+    "wrapper_type": "transformers"
   },
   "_todo": "MAKE SURE DATASET/EXPERIMENT FORMAT IS CORRECT",
   "dataset": {
