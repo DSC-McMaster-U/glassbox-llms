@@ -26,6 +26,8 @@ class Runner:
         module_path = None
         try:
             # TODO: Make sure this is actually the right thing if we change how experiments work
+            # Currently, this assumes there is an exposed interface run_experiment for each experiment
+            # Also assumes that there will acc be experiemnts in glassbox.experiments (does it get imported lke that?)
             module_path = f"glassboxllms.experiments.{self.cfg.experiment.type}"
             experiment_module = importlib.import_module(module_path)
 
@@ -34,7 +36,6 @@ class Runner:
                     f"Experiment {self.cfg.experiment.type} does not have a 'run_experiment' function."
                 )
 
-            # Execute the experiment
             experiment_module.run_experiment(
                 cfg=self.cfg,
                 model=self.model,
