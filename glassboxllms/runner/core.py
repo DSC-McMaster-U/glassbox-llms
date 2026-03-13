@@ -1,7 +1,11 @@
 import importlib
 import logging
-from typing import Any
+from pathlib import Path
+from typing import Any, Union
 
+# careful of relative imports
+from ..models.base import ModelWrapper
+from ..models.factory import create_model_wrapper
 from .config import Config
 from .tracking import get_tracker
 
@@ -10,15 +14,77 @@ class Runner:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self.tracker = get_tracker(cfg)
-        self.model = None
+        self.model: ModelWrapper
         self.dataset = None
 
     def setup(self):
-        """Loads model and dataset based on config."""
         logging.info("Setting up model and dataset...")
-        # TODO: Set this up???
-        # Should load datasets/models with whatever api we settle on
-        pass
+
+        # load model
+        # This is mainly handled by /models/factory.py
+        logging.info(
+            f"Attempting model load {self.cfg.model.name} ({self.cfg.model.checkpoint})"
+        )
+        self.model = create_model_wrapper(
+            model_name=self.cfg.model.name,
+            checkpoint=self.cfg.model.checkpoint,
+            device=self.cfg.model.device,
+            dtype=self.cfg.model.dtype,
+        )
+        logging.info(f"Model successfully loaded on {self.model.device}")
+
+        # load dataset
+        logging.info(f"Attempting dataset load {self.cfg.dataset.path}")
+        self.dataset = self._load_dataset()
+        logging.info(f"Dataset loaded: {len(self.dataset)} samples")
+
+    def _load_dataset(self):
+        from datasets import load_dataset
+        from torch.utils.data import DataLoader, Dataset
+
+        dataset_path = self.cfg.dataset.path
+        split = self.cfg.dataset.split
+        preprocess_config = self.cfg.dataset.preprocess
+        dataset: Any = None
+
+        try:
+            # the package datasets is by huggingface
+            dataset = load_dataset(dataset_path, split=split)
+        except Exception as e:
+            # fallback for local/custom datasets
+            logging.warning(
+                f"Could not load as HF dataset: {e}. Attempting local load..."
+            )
+
+            dataset_type = Path(dataset_path).suffix
+            if dataset_type in ["csv", "json", "parquet", "arrow", "hdf5"]:
+                dataset = load_dataset(dataset_type, dataset_path)
+
+        # if preprocessing is required by the dataset
+        if preprocess_config and self.model and hasattr(self.model, "tokenizer"):
+            max_length = preprocess_config.get("max_length", 512)
+            truncation = preprocess_config.get("truncation", True)
+            padding = preprocess_config.get("padding", "max_length")
+
+            def tokenize_function(examples):
+                # not 100% sure this is accurate
+                text_column = "text" if "text" in examples else "input"
+                return self.model.tokenizer(
+                    examples[text_column],
+                    max_length=max_length,
+                    truncation=truncation,
+                    padding=padding,
+                    return_tensors="pt",
+                )
+
+            dataset = dataset.map(tokenize_function, batched=True)
+        elif preprocess_config and self.model and not hasattr(self.model, "tokenizer"):
+            logging.warning(
+                "Preprocessing requested but model has no tokenizer... "
+                "Skipping tokenization. Experiment may need to handle preprocessing!"
+            )
+
+        return dataset
 
     def run(self):
         logging.info(f"Running experiment: {self.cfg.experiment.type}")
