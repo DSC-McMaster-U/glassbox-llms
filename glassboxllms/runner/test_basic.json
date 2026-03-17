@@ -1,0 +1,36 @@
+{
+  "model": {
+    "name": "bert-base-uncased",
+    "checkpoint": "google-bert/bert-base-uncased",
+    "device": "cpu",
+    "dtype": "float32",
+    "wrapper_type": "transformers"
+  },
+  "dataset": {
+    "path": "Salesforce/wikitext",
+    "name": "wikitext-103-raw-v1",
+    "split": "test",
+    "preprocess": {
+      "max_length": {
+        "text_column": "text",
+        "max_len": 512
+      }
+    }
+  },
+  "experiment": {
+    "type": "dummy",
+    "parameters": {
+      "lr": 2e-5,
+      "bsz": 8,
+      "time": 3
+    },
+    "seed": 0
+  },
+  "tracking": {
+    "enabled": false
+  },
+  "output": {
+    "base_dir": "runs/",
+    "name": "run-001"
+  }
+}
