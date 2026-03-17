@@ -243,23 +243,18 @@ def min_length(
     Returns:
         Dataset with filtered/padded text
     """
-
-    def min_length_function(examples):
-        valid_indices = []
-
-        for i, text in enumerate(examples[text_column]):
+    if drop_short:
+        # Use filter to drop short sequences
+        def filter_function(example):
+            text = example[text_column]
             if not isinstance(text, str):
                 text = str(text) if text is not None else ""
+            return len(text) >= min_length
 
-            if len(text) >= min_length:
-                valid_indices.append(i)
-
-        if drop_short:
-            if len(valid_indices) < len(examples[text_column]):
-                return dataset.select(valid_indices)
-            return dataset
-        else:
-            # Pad short texts
+        return dataset.filter(filter_function)
+    else:
+        # Use map to pad short sequences
+        def pad_function(examples):
             padded_texts = []
             for text in examples[text_column]:
                 if not isinstance(text, str):
@@ -273,7 +268,7 @@ def min_length(
             examples[text_column] = padded_texts
             return examples
 
-    return min_length_function(dataset)
+        return dataset.map(pad_function)
 
 
 def apply_transforms(
@@ -367,7 +362,7 @@ def normalize_text(
                 text = re.sub(r"\s+", " ", text)
 
             if remove_accents:
-                # Remove accents using Unicode normalization
+                # Remove accents using Unicode
                 text = re.sub(r"[^\u0000-\u007F]", "", text)
 
             normalized_texts.append(text)

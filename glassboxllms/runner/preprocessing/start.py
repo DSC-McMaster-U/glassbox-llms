@@ -141,8 +141,7 @@ def start_preprocess(dataset, cfg) -> Any:
                 return_token_type_ids=False,
             )
             # Enforce max token limit by filtering any remaining long sequences
-            input_ids_column = f"{text_column}_input_ids"
-            dataset = dataset.filter(lambda x: len(x[input_ids_column]) <= max_tok)
+            dataset = dataset.filter(lambda x: len(x["input_ids"]) <= max_tok)
             logging.info(f"Applied max token limit {max_tok} to column '{text_column}'")
 
         # Process min_tokens group if specified (supports separate text column)
@@ -152,8 +151,7 @@ def start_preprocess(dataset, cfg) -> Any:
             min_tok = int(min_tokens_group["min_tok"])
             text_column = min_tokens_group.get("text_column", "text")
             # Tokenize the column if it hasn't been tokenized yet
-            input_ids_column = f"{text_column}_input_ids"
-            if input_ids_column not in dataset.column_names:
+            if "input_ids" not in dataset.column_names:
                 dataset = tokenize_dataset(
                     dataset,
                     tokenizer=tokenizer,
@@ -165,7 +163,7 @@ def start_preprocess(dataset, cfg) -> Any:
                     return_token_type_ids=False,
                 )
             # Filter out sequences that don't meet the minimum token requirement
-            dataset = dataset.filter(lambda x: len(x[input_ids_column]) >= min_tok)
+            dataset = dataset.filter(lambda x: len(x["input_ids"]) >= min_tok)
             logging.info(f"Applied min token limit {min_tok} to column '{text_column}'")
 
     return dataset

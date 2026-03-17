@@ -44,11 +44,16 @@ def tokenize_dataset(
 
     def tokenize_function(examples):
         # works for both string and list of strings
-        if isinstance(examples[text_column], str):
-            examples[text_column] = [examples[text_column]]
+        texts = examples[text_column]
+        if isinstance(texts, str):
+            texts = [texts]
+
+        # Filter out None and empty strings to prevent tokenizer errors
+        texts = [str(t) if t is not None else "" for t in texts]
+        texts = [t if t.strip() else " " for t in texts]  # Replace empty/whitespace-only with space
 
         tokenized = tokenizer(
-            examples[text_column],
+            texts,
             max_length=max_length,
             truncation=truncation,
             padding=padding,
