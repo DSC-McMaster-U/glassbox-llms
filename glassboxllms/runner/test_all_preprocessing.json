@@ -1,0 +1,85 @@
+{
+  "model": {
+    "name": "bert-base-uncased",
+    "checkpoint": "google-bert/bert-base-uncased",
+    "device": "cpu",
+    "dtype": "float32",
+    "wrapper_type": "transformers"
+  },
+  "dataset": {
+    "path": "openai/gsm8k",
+    "name": "main",
+    "split": "train",
+    "preprocess": {
+      "rename": {
+        "question": "question"
+      },
+      "apply_transform": {
+        "text_column": "answer",
+        "transform_functions":
+        [
+          "dummy",
+          {
+            "name": "example_transform",
+            "params":
+            {
+              "prefix": "processed_",
+              "suffix": "_new"
+            }
+          }
+        ]
+      },
+      "num_samples": {
+        "count": 500,
+        "seed": 67,
+        "shuffle": true
+      },
+      "columns": ["answer"],
+      "clean_text": {
+        "text_column": "answer",
+        "lowercase": true,
+        "remove_special_chars": true,
+        "normalize_whitespace": true
+      },
+      "normalize_text": {
+        "text_column": "answer",
+        "strip_whitespace": true,
+        "normalize_spaces": true,
+        "remove_accents": true
+      },
+      "max_length": {
+        "text_column": "answer",
+        "max_len": 1024
+      },
+      "min_length": {
+        "text_column": "answer",
+        "min_len": 10,
+        "drop_short": true
+      },
+      "max_tokens": {
+        "text_column": "answer",
+        "max_tok": 512
+      },
+      "min_tokens": {
+        "text_column": "answer",
+        "min_tok": 10
+      }
+    }
+  },
+  "experiment": {
+    "type": "dummy",
+    "parameters": {
+      "lr": 2e-5,
+      "bsz": 8,
+      "time": 3
+    },
+    "seed": 0
+  },
+  "tracking": {
+    "enabled": false
+  },
+  "output": {
+    "base_dir": "runs/",
+    "name": "run-all-preprocessing"
+  }
+}
