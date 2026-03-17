@@ -4,7 +4,7 @@ The actual processing happens in core.py
 """
 
 import re
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union, Iterable
 
 from .custom import *
 
@@ -276,12 +276,9 @@ def min_length(
     return min_length_function(dataset)
 
 
-from typing import Any, Callable, Iterable, List
-
-
 def apply_transforms(
     dataset,
-    transform_fns: Iterable[Callable[[str], str]],
+    transform_fns: Iterable[Union[Callable[[str], str], Dict[str, Any]]],
     text_column: str = "text",
 ) -> Any:
     """
@@ -289,7 +286,7 @@ def apply_transforms(
 
     Args:
         dataset: The HuggingFace dataset to transform
-        transform_fns: A list/iterable of functions to apply in order
+        transform_fns: A list/iterable of functions (or dicts with 'name' and 'params') to apply in order
         text_column: Name of the column containing text to transform
 
     Returns:
@@ -309,7 +306,24 @@ def apply_transforms(
             # apply functions in sequence
             val = str(text)
             for fn in fns:
-                val = fn(val)
+                if isinstance(fn, dict):
+                    func_name = fn.get("name")
+                    params = fn.get("params", {})
+                    if not isinstance(func_name, str):
+                        raise ValueError("Function name must be a string")
+                    func = globals().get(func_name)
+                    if func:
+                        val = func(val, **params)
+                    else:
+                        raise ValueError(f"Function {func_name} not found in custom.py")
+                elif isinstance(fn, str):
+                    func = globals().get(fn)
+                    if func:
+                        val = func(val)
+                    else:
+                        raise ValueError(f"Function {fn} not found in custom.py")
+                else:
+                    val = fn(val)
             transformed_texts.append(val)
 
         examples[text_column] = transformed_texts
