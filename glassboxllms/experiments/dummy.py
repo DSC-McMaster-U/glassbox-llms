@@ -35,6 +35,8 @@ def run_experiment(cfg: Config, model: Any, dataset: Any, tracker: Tracker):
 
     # here's accessing arbitrary parameters provided
     # in the config's experiment's parameters key
+    # note including experiment-specific parameters in
+    # the 'parameters' key is recommended good practice!
     lr = cfg.experiment.parameters.get("lr")
     bsz = cfg.experiment.parameters.get("bsz")
     time = cfg.experiment.parameters.get("time")
