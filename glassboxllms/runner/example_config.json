@@ -6,10 +6,10 @@
     "dtype": "float16",
     "wrapper_type": "transformers"
   },
-  "_todo": "MAKE SURE DATASET/EXPERIMENT FORMAT IS CORRECT",
   "dataset": {
     "path": "data/my_dataset",
     "split": "train",
+    "name": null,
     "preprocess": {
       "max_length": 512,
       "padding": "max_length"

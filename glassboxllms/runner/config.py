@@ -21,6 +21,7 @@ class ModelConfig(BaseModel):
 
 class DatasetConfig(BaseModel):
     path: str
+    name: Optional[str] = None
     split: str = "train"
     preprocess: Dict[str, Any] = Field(default_factory=dict)
 

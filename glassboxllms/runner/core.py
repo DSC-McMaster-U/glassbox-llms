@@ -43,12 +43,13 @@ class Runner:
         from datasets import load_dataset
 
         dataset_path = self.cfg.dataset.path
+        dataset_name = self.cfg.dataset.name
         split = self.cfg.dataset.split
         dataset: Any = None
 
         try:
             # the package datasets is by huggingface
-            dataset = load_dataset(dataset_path, split=split)
+            dataset = load_dataset(dataset_path, name=dataset_name, split=split)
         except Exception as e:
             # fallback for local/custom datasets
             logging.warning(
