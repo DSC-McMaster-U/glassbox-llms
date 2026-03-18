@@ -6,17 +6,31 @@ processes experiment parameters, model settings, dataset configurations, trackin
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-
+import torch
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ModelConfig(BaseModel):
     name: str
     checkpoint: str
     wrapper_type: str = "transformers"
-    device: str = "cuda"
+    device: str = "auto"
     dtype: str = "float16"
+
+    @field_validator("device")
+    @classmethod
+    def detect_device(cls, v: str) -> str:
+        # for if the user does not specify a device
+        if v == "auto":
+            if torch.cuda.is_available():
+                return "cuda"
+            elif torch.backends.mps.is_available():
+                # TODO: is mps even supported in glassbox...?
+                return "mps"
+            else:
+                return "cpu"
+        return v
 
 
 class DatasetConfig(BaseModel):

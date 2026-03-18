@@ -26,10 +26,14 @@ class Runner:
         logging.info(
             f"Attempting model load {self.cfg.model.name} ({self.cfg.model.checkpoint})"
         )
+
+        # make sure the classvalidator that handles auto is called
+        device = self.cfg.model.device
+
         self.model = create_model_wrapper(
             wrapper_type="transformers",
             checkpoint=self.cfg.model.checkpoint,
-            device=self.cfg.model.device,
+            device=device,
             dtype=self.cfg.model.dtype,
         )
         logging.info(f"Model successfully loaded on {self.model.device}")
@@ -48,7 +52,7 @@ class Runner:
         dataset: Any = None
 
         try:
-            # the package datasets is by huggingface
+            # this imports from hf using a slug
             dataset = load_dataset(dataset_path, name=dataset_name, split=split)
         except Exception as e:
             # fallback for local/custom datasets
@@ -58,6 +62,8 @@ class Runner:
             dataset_type = Path(dataset_path).suffix
             if dataset_type in ["csv", "json", "parquet", "arrow", "hdf5"]:
                 dataset = load_dataset(dataset_type, dataset_path)
+            else:
+                logging.error("Local dataset type is not valid, aborted load...")
 
         # apply preprocessing based on config
         if self.cfg.dataset.preprocess:
