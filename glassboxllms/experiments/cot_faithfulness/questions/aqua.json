@@ -1,0 +1,902 @@
+[
+  {
+    "question": "What is the greatest number of identical bouquets that can be made out of 28 white and 98 red tulips if no flowers are to be left out? (Two bouquets are identical whenever the number of red tulips in the two bouquets is equal and the number of white tulips in the two bouquets is equal.)",
+    "choices": [
+      "4",
+      "7",
+      "10",
+      "14",
+      "21"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "D"
+  },
+  {
+    "question": "A jeep travels a certain distance taking 6 hours in the forward journey. During the return journey, it increased its speed by 12km/hr and took 4 hours. What is the distance travelled by the jeep?",
+    "choices": [
+      "126km",
+      "144km",
+      "127km",
+      "228km",
+      "128km"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "Find the total no. of distinct bike no.'s that can beformed using 2 letters followed by 2 no.'s. How many letters need to be distinct?",
+    "choices": [
+      "74453",
+      "64543",
+      "74325",
+      "65000",
+      "97656"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "D"
+  },
+  {
+    "question": "A special cereal mixture contains rice, wheat and corn in the ratio of 2:3:5. If a bag of the mixture contains 3 pounds of rice, how much corn does it contain?",
+    "choices": [
+      "6.5",
+      "7.5",
+      "7",
+      "6",
+      "None of the above"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "A shopkeeper in order to promote his new shop put a discount of 20% on all the items for one day. Now he must sell the items at original price the other day. By what percentage must he increase the price to original?",
+    "choices": [
+      "21%",
+      "20%",
+      "25%",
+      "33%",
+      "18%"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "Calculate the maximum distance you can travel with $8.50 on a cab which charges $3.50 for the first quarter-mile and 10 cents for each additional quarter mile.",
+    "choices": [
+      "11.75 miles",
+      "12.75 miles",
+      "17.75 miles",
+      "14.75 miles",
+      "10.75 miles"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "In a chocolate store, all chocolates are either vanilla or cocoa flavored only. 10% of the chocolates are cocoa flavored, 90% of the rest are squashed. What percentage of the chocolates are both vanilla flavored and not squashed?",
+    "choices": [
+      "1%",
+      "2%",
+      "5%",
+      "9%",
+      "10%"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "D"
+  },
+  {
+    "question": "A starts travel towards south 3km, then travel 5 km towards east, and again travels 3 km to north, and finally travels 2km towards west. In the end how far from is A from home?",
+    "choices": [
+      "3km",
+      "2km",
+      "4km",
+      "5km",
+      "6km"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "A"
+  },
+  {
+    "question": "There are ten lime soda bottles on a table in a restaurant. They are to be served among two different groups of customers consisting of 5 members each. How many ways are there to create these 2 groups?",
+    "choices": [
+      "90",
+      "105",
+      "126",
+      "252",
+      "525"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "D"
+  },
+  {
+    "question": "At 6% per annum simple interest, Rahul borrowed Rs. 500. What amount will he pay to clear the debt after 4 years",
+    "choices": [
+      "750",
+      "700",
+      "620",
+      "600",
+      "None of these"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "Tires of a certain brand, when purchased new, last for four years. A customer can choose to purchase the new tires at a cost of $180 per tire or can have his current tires repaired at a cost of $40 per tire, a repair that will make the current tires last for one additional year. The average cost per year of the new tires is what percent greater than the cost of repairing the current tires?",
+    "choices": [
+      "8%",
+      "10%",
+      "12.5%",
+      "16.7%",
+      "25%"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "The population of a city is 5265526. If there are 4169516 adults in the city, how many children are there in the city?",
+    "choices": [
+      "1095961",
+      "1065961",
+      "1085961",
+      "1097961",
+      "1096061"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "E"
+  },
+  {
+    "question": "If Q, a positive integer, has 5 factors, which of the following must be true about Q?\nI. Q is the square of a prime number.\nII. Q is the fourth power of a prime number.\nIII. Q is the product of two prime numbers.",
+    "choices": [
+      "I only",
+      "III only",
+      "II only",
+      "I and II only",
+      "I and III only"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "Winson runs from his home to his school at an average speed of 10 miles/hr, and then walks home along the same route at an average speed of 5 miles/hr. If the whole journey took one hour, how many miles is his home from his school?",
+    "choices": [
+      "9",
+      "6",
+      "4",
+      "3",
+      "2"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "E"
+  },
+  {
+    "question": "John likes to have lightly flavored tea every evening. In a 50% strong milk tea, he replaces 15% of it with milk twice. Then, he replaces 10 percent of the resultant solution with more milk.\nWhat is the final concentration of tea John drinks?",
+    "choices": [
+      "15.38%",
+      "42%",
+      "39.86%",
+      "22.35%",
+      "32.51%"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "E"
+  },
+  {
+    "question": "In an exam, a candidate secured 504 marks of the maximum mark of M. If the maximum mark M is converted into 800 marks, he would have secured 420 marks. What is the value of M?",
+    "choices": [
+      "278",
+      "2890",
+      "270",
+      "2702",
+      "960"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "E"
+  },
+  {
+    "question": "ABCDE is a regular pentagon with F at its center. How many different quadrilaterals can be formed by joining 4 of the points A,B,C,D,E and F?",
+    "choices": [
+      "12",
+      "10",
+      "5",
+      "15",
+      "20"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "D"
+  },
+  {
+    "question": "Of the 200 students in a school, at least 45% attended the prom night and at least 35% took part in the debating session. What is the maximum number of students who could have neither attended the prom night nor the debating session?",
+    "choices": [
+      "27",
+      "81",
+      "90",
+      "99",
+      "110"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "E"
+  },
+  {
+    "question": "A train running at a speed of 100 miles/hour, takes 10 hours to reach its destination. After covering quarter of the distance, it starts raining and the train has to be slowed to speed of 75 miles/hour. What is the total journey duration?",
+    "choices": [
+      "10",
+      "11.5",
+      "12.5",
+      "13.5",
+      "15"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "In a class 1/16 of the students study math, 1/10 of the students study bio, 1/8 of the students study english. The total number of students is a 4 digit number. Find the diffrence between maximum number of students and minimum number of students.",
+    "choices": [
+      "8880",
+      "8870",
+      "8890",
+      "7890",
+      "6780"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "A"
+  },
+  {
+    "question": "Train A leaves a station every 16 minutes and Train B leaves every 17 minutes. If both trains just left the station simultaneously, how long until they do so again?",
+    "choices": [
+      "272 minutes",
+      "304 minutes",
+      "190 minutes",
+      "70 minutes",
+      "35 minutes"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "A"
+  },
+  {
+    "question": "The sum of the 5 consecutive two digit odd numbers when divided by 10 becomes a perfect square, which of the following can be one of these 5 numbers?",
+    "choices": [
+      "47",
+      "91",
+      "41",
+      "67",
+      "44"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "An astronaut weighing 211 pounds on Earth would weigh 182 pounds on Venus. The weight of the astronaut on Venus would be approximately what percent of the astronaut\u2019s weight on Earth?",
+    "choices": [
+      "50%",
+      "60%",
+      "70%",
+      "86%",
+      "90%"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "D"
+  },
+  {
+    "question": "The height of a room to its semi-perimeter is 2:5. It costs Rs.260 to paper the walls of the room with paper 50cm wide at Rs.2 per meter allowing an area of 15 sq.m for doors and windows. The height of the room is:",
+    "choices": [
+      "2.6m",
+      "3.9m",
+      "4m",
+      "4.2m",
+      "4.4m"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "It takes a worker 9 minutes to drive from home to work at an average rate of 20 kilometers per hour. How many minutes will it take the worker to cycle from home to work along the same route at an average rate of 6 kilometers per hour?",
+    "choices": [
+      "30",
+      "32",
+      "35",
+      "36",
+      "40"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "A"
+  },
+  {
+    "question": "The events A and B are independent. The probability that event A occurs is 0.6, and the probability that at least one of the events A or B occurs is 0.96. What is the probability that event B occurs?",
+    "choices": [
+      "0.5",
+      "0.6",
+      "0.7",
+      "0.8",
+      "0.9"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "E"
+  },
+  {
+    "question": "I have a money pouch containing Rs. 700. There are equal number of 25 paise coins, 50 paise coins and one rupee coins.\nHow many of each are there?",
+    "choices": [
+      "453",
+      "651",
+      "400",
+      "487",
+      "286"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "A number is as much greater than 36 as is less than 86. Find the Number.",
+    "choices": [
+      "60",
+      "56",
+      "51",
+      "61",
+      "41"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "D"
+  },
+  {
+    "question": "Printer A and Printer B can each print 1\u20442 page per second. How long will it take both printers working together to print 100 pages?",
+    "choices": [
+      "25 seconds",
+      "50 seconds",
+      "100 seconds",
+      "200 seconds",
+      "400 seconds"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "Last year, 34 percent of Ace Book Company's sales revenue came from the sale of novels. Of the remaining revenue, 1/3 was from the sale of biographies. The company's revenue from the sale of novels was approximately, how many times its revenue from the sale of biographies?",
+    "choices": [
+      "1.3",
+      "1.5",
+      "2.1",
+      "2.5",
+      "3.1"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "At the of his one-year investment, Charles received $54,080, including interest and principal from a certain investment. If the investment paid an annual interest of 8 percent compounded semi-annually, which of the following is the amount of money that Charles originally invested?",
+    "choices": [
+      "$45,000",
+      "$50,000",
+      "$54,000",
+      "$59,000",
+      "$62,000"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "x men working x hours per day can do x units of a work in x days. How much work can be completed by y men working y hours per day in y days?",
+    "choices": [
+      "x2/y2 units",
+      "y3/x2 units",
+      "x3/y2 units",
+      "y2/x2 units",
+      "None of these"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "A hollow cube of size 5cm is taken, with the thickness of 1cm. It is made of smaller cubes of size 1cm .If the outer surface of the cube is painted how many faces of the smaller cubes remain unpainted?",
+    "choices": [
+      "438",
+      "550",
+      "500",
+      "450",
+      "498"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "A"
+  },
+  {
+    "question": "If n is such that 36 \u2264 n \u2264 72, then x = (n2 + 2\u221an(n + 4) + 16) / (n+ 4\u221an+ 4) satisfies",
+    "choices": [
+      "20 < x < 54",
+      "23 < x < 58",
+      "25 < x < 64",
+      "28 < x < 60",
+      "None of these"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "D"
+  },
+  {
+    "question": "Janice bikes at 10 miles per hour, while Jennie bikes at 20. How long until they have collectively biked 1 mile?",
+    "choices": [
+      "1 minute",
+      "2 minutes",
+      "3 minutes",
+      "4 minutes",
+      "5 minutes"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "The bus fare for two persons for travelling between Agra and Aligarh id four-thirds the train fare between the same places for one person. The total fare paid by 6 persons travelling by bus and 8 persons travelling by train between the two places is Rs.1512. Find the train fare between the two places for one person?",
+    "choices": [
+      "126",
+      "77",
+      "88",
+      "66",
+      "54"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "A"
+  },
+  {
+    "question": "What is the largest integral value of 'k' for which the quadratic equation x2 - 5x + k = 0 will have two real and distinct roots?",
+    "choices": [
+      "9",
+      "7",
+      "3",
+      "8",
+      "12"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "The original price of an item is discounted 22%. A customer buys the item at this discounted price using a $20-off coupon. There is no tax on the item, and this was the only item the customer bought. If the customer paid $1.90 more than half the original price of the item, what was the original price of the item?",
+    "choices": [
+      "$61",
+      "$65",
+      "$67.40",
+      "$70",
+      "$78.20"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "E"
+  },
+  {
+    "question": "Three bells ring at intervals of 36 seconds, 40 seconds and 48 seconds, respectively. They start ringing together at a particular time. When they will ring together again?",
+    "choices": [
+      "After 6 minutes",
+      "After 12 minutes",
+      "After 18 minutes",
+      "After 24 minutes",
+      "none"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "If 10 is subtracted from 2/3 of a number the result is equal to sum of 40 and 1/3 of the number. Find the number",
+    "choices": [
+      "100",
+      "160",
+      "150",
+      "210",
+      "220"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "Jack buys 18 sharpeners (white and brown) for rs. 100. If he pays 1 rupee more for each white than brown sharpeners. How many of white and how many brown sharpeners did he buy?",
+    "choices": [
+      "10,8",
+      "9,8",
+      "7,8",
+      "5,6",
+      "11,12"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "A"
+  },
+  {
+    "question": "What will be the cost of gardening 1-metre \u2013 broad boundary around a rectangular plot having perimeter of 340 metres at the rate of 10 per square metre?",
+    "choices": [
+      "3400",
+      "1700",
+      "3440",
+      "Cannot be determined",
+      "None of these"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  },
+  {
+    "question": "At a conference, one team is made up of 4 men and 4 women. Four presenters are chosen to present the team's findings in front of the entire conference. How many different groups of presenters can be chosen from the team if a team cannot be composed of men only or women only? (Two groups of presenters are considered different if at least one presenter is different.)",
+    "choices": [
+      "120",
+      "19",
+      "180",
+      "420",
+      "460"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "If Raj was one-third as old as Rahim 5 years back and Raj is 17 years old now, How old is Rahim now?",
+    "choices": [
+      "37",
+      "41",
+      "40",
+      "42",
+      "43"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "B"
+  },
+  {
+    "question": "On a test the passing students had an average of 83, while the failing students had an average\nof 55. If the overall class average was 76, what percent of the class passed?",
+    "choices": [
+      "44%",
+      "66%",
+      "68%",
+      "72%",
+      "75%"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "E"
+  },
+  {
+    "question": "An aeroplane flies along the four sides of a square at the speeds of 200, 400, 600 and 800km/hr. Find the average speed of the plane around the field?",
+    "choices": [
+      "384",
+      "562",
+      "458",
+      "156",
+      "452"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "A"
+  },
+  {
+    "question": "Professors borrowed Rs. 5000 from the university at simple interest. After 3 years, the university got Rs. 300 on interest. What was the rate of interest per annum?",
+    "choices": [
+      "2%",
+      "8%",
+      "5%",
+      "10%",
+      "None of these"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "A"
+  },
+  {
+    "question": "An electric pole, 14 metres high, casts a shadow of 10 metres. Find the height of a tree that casts a shadow of 15 metres under similar conditions.",
+    "choices": [
+      "21",
+      "22",
+      "20",
+      "23",
+      "24"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "A"
+  },
+  {
+    "question": "there are more than 501 students in a school such that 20% of them exactly took physics and 28% of them exactly took math. What could be the least possible no of students in the school?",
+    "choices": [
+      "550",
+      "570",
+      "600",
+      "700",
+      "none of these"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "E"
+  },
+  {
+    "question": "A man wants to eat fruit for breakfast and vegetable for dinner. He has 6 different types of fruit and 8 different types of vegetables. He can only eat one type at a time. In how many ways can he eat breakfast and dinner.",
+    "choices": [
+      "54",
+      "24",
+      "48",
+      "20",
+      "36"
+    ],
+    "labels": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "answer": "C"
+  }
+]
