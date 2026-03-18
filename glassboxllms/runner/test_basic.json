@@ -9,6 +9,8 @@
   "dataset": {
     "path": "Salesforce/wikitext",
     "name": "wikitext-103-raw-v1",
+    "data_dir": null,
+    "data_files": null,
     "split": "test",
     "preprocess": {
       "max_length": {

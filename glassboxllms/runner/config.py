@@ -36,6 +36,8 @@ class ModelConfig(BaseModel):
 class DatasetConfig(BaseModel):
     path: str
     name: Optional[str] = None
+    data_dir: Optional[str] = None
+    data_files: Optional[Any] = None
     split: str = "train"
     preprocess: Dict[str, Any] = Field(default_factory=dict)
 

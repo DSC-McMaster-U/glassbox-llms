@@ -7,9 +7,11 @@
     "wrapper_type": "transformers"
   },
   "dataset": {
-    "path": "data/my_dataset",
+    "path": "your/path/to/the/dataset",
+    "name": "name/of/configuration",
+    "data_dir": "load/all/files/in/this/subdir",
+    "data_files": "specific/file/to/load",
     "split": "train",
-    "name": null,
     "preprocess": {
       "max_length": 512,
       "padding": "max_length"

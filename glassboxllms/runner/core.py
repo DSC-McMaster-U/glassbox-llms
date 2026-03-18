@@ -48,22 +48,18 @@ class Runner:
 
         dataset_path = self.cfg.dataset.path
         dataset_name = self.cfg.dataset.name
+        data_dir = self.cfg.dataset.data_dir
+        data_files = self.cfg.dataset.data_files
         split = self.cfg.dataset.split
         dataset: Any = None
 
-        try:
-            # this imports from hf using a slug
-            dataset = load_dataset(dataset_path, name=dataset_name, split=split)
-        except Exception as e:
-            # fallback for local/custom datasets
-            logging.warning(
-                f"Could not load as HF dataset: {e}. Attempting local load..."
-            )
-            dataset_type = Path(dataset_path).suffix
-            if dataset_type in ["csv", "json", "parquet", "arrow", "hdf5"]:
-                dataset = load_dataset(dataset_type, dataset_path)
-            else:
-                logging.error("Local dataset type is not valid, aborted load...")
+        dataset = load_dataset(
+            path=dataset_path,
+            name=dataset_name,
+            data_dir=data_dir,
+            data_files=data_files,
+            split=split
+        )
 
         # apply preprocessing based on config
         if self.cfg.dataset.preprocess:

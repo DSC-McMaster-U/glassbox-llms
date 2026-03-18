@@ -9,6 +9,8 @@
   "dataset": {
     "path": "openai/gsm8k",
     "name": "main",
+    "data_dir": null,
+    "data_files": null,
     "split": "train",
     "preprocess": {
       "rename": {
