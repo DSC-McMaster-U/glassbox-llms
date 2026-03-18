@@ -17,13 +17,7 @@ from .dataset import (
 )
 from .start import start_preprocess
 from .tokenizers import (
-    batch_tokenize,
-    tokenize_and_align_labels,
     tokenize_dataset,
-    tokenize_multimodal,
-    tokenize_with_encoding,
-    tokenize_with_special_tokens,
-    tokenize_with_truncation,
 )
 
 __all__ = [
@@ -39,11 +33,5 @@ __all__ = [
     # Preprocessing start
     "start_preprocess",
     # Tokenizer functions
-    "batch_tokenize",
-    "tokenize_and_align_labels",
     "tokenize_dataset",
-    "tokenize_multimodal",
-    "tokenize_with_encoding",
-    "tokenize_with_special_tokens",
-    "tokenize_with_truncation",
 ]

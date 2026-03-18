@@ -271,8 +271,6 @@ The preprocessing module provides modular transformations that can be configured
 | Token limits | `max_tokens`, `min_tokens` | Token-based limits (auto-tokenizes first) |
 | Custom transforms | `apply_transform` | Apply custom Python functions |
 
-As well as a gamut of different tokenization options in [tokenizers.py](/preprocessing/tokenizers.py).
-
 To use them, import them through the module like `from glassboxllms.runner.preprocessing import ______`.
 
 **Adding new preprocessing functions:**
@@ -418,12 +416,11 @@ def run_experiment(cfg, model, dataset, tracker):
 ### Using Preprocessing Functions
 
 ```python
-from glassboxllms.runner.preprocessing import clean_text, tokenize_multimodal
+from glassboxllms.runner.preprocessing import clean_text
 
 def run_experiment(cfg, model, dataset, tracker):
     # Apply custom preprocessing
     dataset = clean_text(dataset, text_column="text", lowercase=True)
-    dataset = tokenize_multimodal(dataset, tokenizer=model.tokenizer, text_column="text")
     
     # Continue with experiment
 ```
