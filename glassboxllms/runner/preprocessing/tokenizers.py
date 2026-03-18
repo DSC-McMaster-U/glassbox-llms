@@ -1,10 +1,4 @@
-"""
-This module provides functions for tokenizing text data using various tokenizers
-and applying different tokenization strategies. These are designed to be callable
-from an experiment's code as needed.
-"""
-
-# TODO: Officially implement the rest of the tokenizers
+# TODO: Officially implement other tokenization functions
 
 from typing import Any, Dict, List, Optional, Union
 
