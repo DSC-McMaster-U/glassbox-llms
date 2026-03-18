@@ -371,22 +371,3 @@ def normalize_text(
         return examples
 
     return dataset.map(normalize_function)
-
-
-def encode_labels(
-    dataset,
-    label_column: str = "label",
-    label_mapping: Optional[Dict[Union[str, int], int]] = None,
-) -> Any:
-    """
-    Encodes label columns to numeric values.
-
-    Args:
-        dataset: The HuggingFace dataset to encode
-        label_column: Name of the column containing labels
-        label_mapping: Optional dictionary mapping labels to numeric values.
-                      If not provided, labels will be automatically mapped.
-
-    Returns:
-        Dataset with encoded labels
-    """

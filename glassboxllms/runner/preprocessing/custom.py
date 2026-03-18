@@ -1,4 +1,6 @@
 # Place your custom functions here (to be used with apply_transforms)
+# Note that you should not include column name or dataset name as a parameter here.
+# The config will handle that.
 
 from typing import Any
 
