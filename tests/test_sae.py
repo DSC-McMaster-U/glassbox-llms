@@ -28,6 +28,7 @@ from glassboxllms.features import (
     unit_norm_decoder,
     topk_activation,
 )
+from glassboxllms.features.feature_set import HAS_SAFETENSORS
 
 
 class TestSparseAutoencoder:
@@ -480,6 +481,9 @@ class TestFeatureSet:
 
     def test_save_load(self, temp_dir):
         """Test FeatureSet save and load with SafeTensors."""
+        if not HAS_SAFETENSORS:
+            pytest.skip("safetensors not installed")
+
         W_dec = torch.randn(100, 50)
         W_enc = torch.randn(50, 100)
 
