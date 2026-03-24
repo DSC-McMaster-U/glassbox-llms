@@ -110,3 +110,7 @@ Thumbs.db
 # Saved circuits (keep examples, ignore user-generated)
 circuits/*.json
 !circuits/examples/
+
+# Generated demo artifacts
+outputs/
+media/
