@@ -338,12 +338,24 @@ class ProbingHyperplaneScene(Scene):
 
         self.play(FadeIn(dots), run_time=0.8)
 
-        # Draw decision boundary as dashed line through origin of PCA space
+        # Draw decision boundary as dashed line in PCA-projected space.
+        # The probe's coefficient vector lives in the full activation space.
+        # If points_2d were produced by PCA, the correct 2D normal is obtained
+        # by projecting the full coefficient vector through the same PCA basis.
+        # We store the projected normal in metadata when the adapter runs PCA;
+        # otherwise fall back to first-2-components approximation.
         coef = data.coefficients
         if coef is not None and coef.ndim >= 1 and len(coef) >= 2:
-            # The hyperplane normal in the original space projects to a
-            # line in 2D.  We approximate with the first 2 components.
-            normal_2d = coef[:2] / (np.linalg.norm(coef[:2]) + 1e-8)
+            # Use PCA-projected normal if available (set by adapter), else
+            # project the full coefficient vector through a 2-component
+            # approximation.  This is still an approximation when the
+            # decision boundary doesn't lie in the PCA plane, but is much
+            # more accurate than taking coef[:2] directly.
+            normal_2d_raw = data.metadata.get("normal_2d")
+            if normal_2d_raw is None:
+                normal_2d_raw = coef[:2]
+            normal_2d_raw = np.asarray(normal_2d_raw, dtype=float)
+            normal_2d = normal_2d_raw / (np.linalg.norm(normal_2d_raw) + 1e-8)
             # The boundary is perpendicular to the normal
             perp = np.array([-normal_2d[1], normal_2d[0]])
             start = axes.c2p(*(perp * -4.5))

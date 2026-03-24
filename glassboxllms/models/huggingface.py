@@ -2,9 +2,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
 
 from .base import ModelWrapper
+
+_MODEL_CLASSES = {
+    "auto": AutoModel,
+    "causal_lm": AutoModelForCausalLM,
+}
 
 
 class TransformersModelWrapper(ModelWrapper):
@@ -14,19 +19,43 @@ class TransformersModelWrapper(ModelWrapper):
     Wraps any AutoModel-compatible model with the standard ModelWrapper
     interface for activation extraction, hooking, and introspection.
 
+    Args:
+        model_name: HuggingFace model identifier (e.g., ``"gpt2"``).
+        device: Device string (``"cpu"``, ``"cuda"``). Auto-detected if omitted.
+        model_class: Which AutoModel variant to load.
+            ``"auto"`` (default) uses ``AutoModel`` — works with any architecture.
+            ``"causal_lm"`` uses ``AutoModelForCausalLM`` — adds ``lm_head`` for
+            logit lens and generation tasks.
+
     Example:
         >>> wrapper = TransformersModelWrapper("gpt2")
         >>> output = wrapper.forward("Hello, world!")
         >>> activations = wrapper.get_activations("Hello", layers=["transformer.h.0"])
+        >>> # For logit lens (needs lm_head):
+        >>> wrapper = TransformersModelWrapper("gpt2", model_class="causal_lm")
+        >>> wrapper.lm_head  # accessible
     """
 
-    def __init__(self, model_name: str, device: Optional[str] = None):
+    def __init__(
+        self,
+        model_name: str,
+        device: Optional[str] = None,
+        model_class: str = "auto",
+    ):
         super().__init__()
         self._model_name = model_name
+        self._model_class = model_class
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.model = AutoModel.from_pretrained(model_name)
+
+        loader = _MODEL_CLASSES.get(model_class)
+        if loader is None:
+            raise ValueError(
+                f"Unknown model_class '{model_class}'. "
+                f"Choose from: {list(_MODEL_CLASSES.keys())}"
+            )
+        self.model = loader.from_pretrained(model_name)
         self.model.eval()
 
         self._device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -153,5 +182,19 @@ class TransformersModelWrapper(ModelWrapper):
         """Set model to training mode."""
         self.model.train()
 
+    @property
+    def lm_head(self) -> nn.Module:
+        """Return the language model head (requires ``model_class="causal_lm"``)."""
+        head = getattr(self.model, "lm_head", None)
+        if head is None:
+            raise AttributeError(
+                f"Model '{self._model_name}' loaded with model_class='{self._model_class}' "
+                "does not have an lm_head. Use model_class='causal_lm' to access it."
+            )
+        return head
+
     def __repr__(self) -> str:
-        return f"TransformersModelWrapper(model='{self._model_name}', device='{self.device}')"
+        return (
+            f"TransformersModelWrapper(model='{self._model_name}', "
+            f"device='{self.device}', model_class='{self._model_class}')"
+        )

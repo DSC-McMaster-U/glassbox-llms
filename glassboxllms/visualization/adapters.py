@@ -175,6 +175,13 @@ def probe_result_to_scene_data(
         pca = PCA(n_components=2, random_state=42)
         points_2d = pca.fit_transform(acts)
 
+    # Project the probe's coefficient vector into PCA space so the scene
+    # can draw an accurate decision boundary.
+    metadata = dict(probe_result.metadata or {})
+    if points_2d is not None and coefficients is not None and len(coefficients) > 1:
+        # normal_2d = coef projected through PCA components (no mean subtraction)
+        metadata["normal_2d"] = (coefficients @ pca.components_.T).tolist()
+
     return ProbeSceneData(
         layer=layer,
         direction_name=direction_name,
@@ -184,7 +191,7 @@ def probe_result_to_scene_data(
         points_2d=points_2d,
         labels=labels,
         class_names=class_names,
-        metadata=probe_result.metadata or {},
+        metadata=metadata,
     )
 
 
@@ -192,7 +199,7 @@ def sae_features_to_scene_data(
     features,
     activation_matrix: Optional[np.ndarray] = None,
     model_name: str = "",
-    layer: int = 0,
+    layer: Optional[int] = None,
     top_k: int = 10,
 ) -> SAESceneData:
     """
@@ -254,11 +261,11 @@ def sae_features_to_scene_data(
         act_grid = np.asarray(activation_matrix)
 
     return SAESceneData(
-        model_name=model_name or (feature_list[0].model_name if feature_list else ""),
-        layer=layer or (feature_list[0].layer if feature_list else 0),
+        model_name=model_name if model_name else (feature_list[0].model_name if feature_list else ""),
+        layer=layer if layer is not None else (feature_list[0].layer if feature_list else 0),
         features=scene_features,
         activation_grid=act_grid,
-        metadata={"top_k": top_k, "total_features": len(list(features))},
+        metadata={"top_k": top_k, "total_features": len(feature_list)},
     )
 
 
@@ -310,7 +317,11 @@ def steering_result_to_scene_data(
     before_2d = combined_2d[:n]
     after_2d = combined_2d[n:]
 
-    vec_2d = pca.transform(vec.reshape(1, -1))[0]
+    # Project the direction vector using PCA components directly (dot product).
+    # pca.transform() subtracts the dataset mean first, which is correct for
+    # points but wrong for direction vectors — directions are relative, not
+    # anchored to the data centroid.
+    vec_2d = vec @ pca.components_.T
 
     return SteeringSceneData(
         direction_name=direction_name,

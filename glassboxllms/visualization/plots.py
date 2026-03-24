@@ -167,14 +167,32 @@ def plot_logit_lens(
         figsize = (max(8, seq_len * 0.8), max(6, n_layers * 0.5))
 
     fig, ax = plt.subplots(figsize=figsize)
+
+    # top_k_tokens is 3D: (n_layers, seq_len, k).  Collapse the k
+    # dimension to a single string per cell so seaborn annot can use it.
+    annot: Any = False
+    fmt = ".2f"
+    if top_k_tokens is not None:
+        annot_2d = []
+        for layer_preds in top_k_tokens:
+            row = []
+            for pos_preds in layer_preds:
+                if isinstance(pos_preds, (list, tuple)):
+                    row.append(str(pos_preds[0]) if pos_preds else "")
+                else:
+                    row.append(str(pos_preds))
+            annot_2d.append(row)
+        annot = annot_2d
+        fmt = ""
+
     sns.heatmap(
         logit_lens_data,
         ax=ax,
         cmap=cmap,
         xticklabels=list(tokens),
         yticklabels=[f"Layer {i}" for i in range(n_layers)],
-        annot=top_k_tokens if top_k_tokens is not None else False,
-        fmt="" if top_k_tokens is not None else ".2f",
+        annot=annot,
+        fmt=fmt,
     )
     ax.set_title("Logit Lens — Correct-Token Probability by Layer")
     ax.set_xlabel("Token position")
