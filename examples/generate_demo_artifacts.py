@@ -83,6 +83,7 @@ def main():
         train_probe_on_model,
         train_sae_on_model,
     )
+    from glassboxllms.primitives.probes.linear import LinearProbe
 
     # ------------------------------------------------------------------
     # 1. Logit Lens
@@ -146,16 +147,25 @@ def main():
     try:
         from glassboxllms.visualization.plots import plot_probe_accuracy
 
-        # Evaluate probe on the training data to get real accuracy
-        # (small dataset, so this is train accuracy — noted in caveats)
-        probe_result = probe.evaluate(probe_acts, probe_labels)
-        real_accuracy = probe_result.accuracy if probe_result else 0.0
-        probe_metrics = {
-            TARGET_LAYER: {
-                "accuracy": real_accuracy,
-                "direction_norm": float(np.linalg.norm(direction)),
-            },
-        }
+        # Probe across multiple layers to show where sentiment is encoded
+        probe_layers = [f"transformer.h.{i}" for i in [0, 2, 4, 5, 8, 11]]
+        probe_metrics = {}
+        for pl in probe_layers:
+            pl_acts = extract_activations(
+                MODEL_NAME, all_probe_texts, [pl],
+                return_type="numpy", model=model,
+            )[pl]
+            if pl_acts.ndim == 3:
+                pl_acts = pl_acts.mean(axis=1)
+            p = LinearProbe(layer=pl, direction="sentiment", model_type="logistic")
+            p.fit(pl_acts, probe_labels)
+            result = p.evaluate(pl_acts, probe_labels)
+            acc = result.accuracy if result else 0.0
+            # Use short label for display
+            short_label = f"h.{pl.split('.')[-1]}"
+            probe_metrics[short_label] = {"accuracy": acc}
+            print(f"    layer {short_label}: accuracy={acc:.2f}")
+
         fig = plot_probe_accuracy(probe_metrics)
         path = os.path.join(OUTPUT_DIR, "probe.png")
         fig.savefig(path, dpi=150, bbox_inches="tight")
@@ -239,7 +249,12 @@ def main():
     try:
         from glassboxllms.visualization.plots import plot_circuit_graph
 
-        fig = plot_circuit_graph(graph)
+        # Shorten node labels for readability
+        for node in graph.nodes:
+            short = node.id.replace("transformer.", "").replace("layer.", "L")
+            node.metadata["label"] = short
+
+        fig = plot_circuit_graph(graph, layout="layer", figsize=(16, 8))
         path = os.path.join(OUTPUT_DIR, "circuit.png")
         fig.savefig(path, dpi=150, bbox_inches="tight")
         print(f"  saved: {path}")
@@ -279,16 +294,22 @@ def main():
     try:
         from glassboxllms.visualization.plots import plot_steering_effects
 
-        # Compare activation norms before and after
-        before_norms = np.linalg.norm(steer_results["activations_before"], axis=1)
-        after_norms = np.linalg.norm(steer_results["activations_after"], axis=1)
+        # Project activations onto steering direction to show meaningful shift.
+        # The dot product with the direction vector measures how much each
+        # sample aligns with the sentiment concept.
+        dir_unit = steer_results["direction"] / (np.linalg.norm(steer_results["direction"]) + 1e-8)
+        proj_before = steer_results["activations_before"] @ dir_unit
+        proj_after = steer_results["activations_after"] @ dir_unit
+
         steering_data = {
-            "baseline": {"mean_activation_norm": float(before_norms.mean())},
+            "baseline": {"direction_projection": float(proj_before.mean())},
             f"steered (strength={steer_results['strength']})": {
-                "mean_activation_norm": float(after_norms.mean()),
+                "direction_projection": float(proj_after.mean()),
             },
         }
-        fig = plot_steering_effects(steering_data)
+        print(f"  projection before: {proj_before.mean():.3f}")
+        print(f"  projection after:  {proj_after.mean():.3f}")
+        fig = plot_steering_effects(steering_data, metric="direction_projection")
         path = os.path.join(OUTPUT_DIR, "steering.png")
         fig.savefig(path, dpi=150, bbox_inches="tight")
         print(f"  saved:        {path}")

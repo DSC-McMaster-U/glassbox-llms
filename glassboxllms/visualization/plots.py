@@ -424,6 +424,7 @@ def plot_circuit_graph(
             node.id,
             node_type=node.node_type.value,
             layer=node.layer,
+            label=node.metadata.get("label", node.id),
         )
 
     for edge in circuit_graph.edges:
@@ -458,8 +459,16 @@ def plot_circuit_graph(
         G, pos, ax=ax, node_color=colors,
         node_size=node_size, edgecolors="black", linewidths=0.5,
     )
+    # Use label from metadata if available, otherwise shorten the node id
+    labels_map = {}
+    for n in G.nodes():
+        meta_label = G.nodes[n].get("label")
+        if meta_label:
+            labels_map[n] = meta_label
+        else:
+            labels_map[n] = n
     nx.draw_networkx_labels(
-        G, pos, ax=ax, font_size=font_size,
+        G, pos, labels=labels_map, ax=ax, font_size=font_size,
     )
     nx.draw_networkx_edges(
         G, pos, ax=ax, width=widths,
