@@ -16,6 +16,57 @@ This module provides data structures for representing neural network circuits as
 
 This module is part of GlassboxLLMs and requires no additional dependencies beyond the standard library.
 
+## Circuit Discovery
+
+The `CircuitDiscoveryExperiment` class automates discovery of task-relevant circuits by combining:
+1. **Attribution scoring** - identifies important nodes
+2. **Connectivity verification** - tests directed edges (e.g., via path patching)
+3. **Edge pruning** - removes low-impact edges
+4. **FeatureAtlas cross-reference** - maps nodes to interpretable features
+
+### Quick Discovery Example
+
+```python
+from glassboxllms.analysis.circuits import CircuitDiscoveryExperiment
+from glassboxllms.analysis.feature_atlas import Atlas
+
+# Define your model's attribution, connectivity, and performance functions
+def my_attribution_fn(model, task):
+    # Return list of {"node_id": ..., "node_type": ..., "score": ...}
+    pass
+
+def my_connectivity_fn(model, task, source_id, target_id):
+    # Return edge strength (float)
+    pass
+
+def my_performance_fn(model, task, circuit):
+    # Return task performance [0, 1] with circuit (or None for baseline)
+    pass
+
+# Run discovery
+experiment = CircuitDiscoveryExperiment(
+    model=my_model,
+    task="my_task",
+    threshold=0.05,
+    attribution_fn=my_attribution_fn,
+    connectivity_fn=my_connectivity_fn,
+    performance_fn=my_performance_fn,
+    feature_atlas=my_atlas,  # optional
+    output_path="circuits/discovered.json"
+)
+
+circuit = experiment.discover()
+print(f"Found {len(circuit.nodes)} nodes, {len(circuit.edges)} edges")
+print(f"Retention ratio: {circuit.metadata['discovery_metrics']['retention_ratio']:.2%}")
+```
+
+### View Discovery Examples
+
+See [outputs/representations/circuits/discovered_circuit.json](../../../outputs/representations/circuits/discovered_circuit.json) for a concrete discovered circuit artifact showing:
+- Node saliency scores and FeatureAtlas IDs
+- Edge connectivity scores
+- Success metrics (retention ratio vs. baseline)
+
 ## Quick Start
 
 ```python
@@ -214,9 +265,30 @@ print(f"Circuit has {stats['num_nodes']} components")
 print(f"Spans layers {stats['layer_range'][0]} to {stats['layer_range'][1]}")
 ```
 
+## Testing
+
+Three test suites cover the circuits module:
+
+| Test File | Purpose | Run |
+|-----------|---------|-----|
+| `tests/test_circuit_graph.py` | Graph data structure (58 tests) | `pytest tests/test_circuit_graph.py -v` |
+| `tests/test_circuit_discovery_experiment.py` | Discovery pipeline (5 tests) | `pytest tests/test_circuit_discovery_experiment.py -v` |
+| `tests/test_circuit_discovery_validation.py` | End-to-end validation demo | `python tests/test_circuit_discovery_validation.py` |
+| `tests/test_attribution_integrated_gradients.py` | Attribution primitives (3 tests) | `pytest tests/test_attribution_integrated_gradients.py -v` |
+
+Run all circuit tests:
+```bash
+pytest tests/test_circuit*.py -v
+```
+
+The validation script produces a concrete artifact at `outputs/representations/circuits/discovered_circuit.json` showing a fully discovered circuit with nodes and edges.
+
 ## Related Modules
 
+- **`glassboxllms.analysis.circuits.discovery`** - Automated circuit discovery via `CircuitDiscoveryExperiment`
+- **`glassboxllms.primitives.attribution`** - Attribution scoring primitives (Integrated Gradients scaffold)
 - **`glassboxllms.instrumentation.activation_patching`** - Discover circuits via causal interventions
+- **`glassboxllms.analysis.feature_atlas`** - Cross-reference discovered nodes to interpretable features
 - **`glassboxllms.primitives.probes`** - Test what information is encoded in circuit components
 
 ## References
