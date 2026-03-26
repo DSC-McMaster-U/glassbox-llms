@@ -21,6 +21,7 @@ from glassboxllms.features import (
     FeatureSet,
     geometric_median,
 )
+from glassboxllms.features.feature_set import HAS_SAFETENSORS
 from glassboxllms.instrumentation.activations import ActivationStore
 
 
@@ -189,6 +190,9 @@ class TestActivationStoreIntegration:
 
     def test_feature_set_save_after_training(self):
         """Test saving FeatureSet after training with ActivationStore data."""
+        if not HAS_SAFETENSORS:
+            pytest.skip("safetensors not installed")
+
         with tempfile.TemporaryDirectory() as tmpdir:
             store = ActivationStore(device="cpu", storage_dir=tmpdir, buffer_size=50)
 

@@ -1,34 +1,122 @@
-from abc import ABC
-from typing import Any, Dict, List, Tuple
-import torch
-from transformers import AutoModel, AutoTokenizer
+from typing import Any, Dict, List, Optional, Tuple
 
-class TransformersModelWrapper(ModelWrapper, ABC):
-    def __init__(self, model_name: str):
+import torch
+import torch.nn as nn
+from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
+
+from .base import ModelWrapper
+
+_MODEL_CLASSES = {
+    "auto": AutoModel,
+    "causal_lm": AutoModelForCausalLM,
+}
+
+
+class TransformersModelWrapper(ModelWrapper):
+    """
+    HuggingFace Transformers model wrapper.
+
+    Wraps any AutoModel-compatible model with the standard ModelWrapper
+    interface for activation extraction, hooking, and introspection.
+
+    Args:
+        model_name: HuggingFace model identifier (e.g., ``"gpt2"``).
+        device: Device string (``"cpu"``, ``"cuda"``). Auto-detected if omitted.
+        model_class: Which AutoModel variant to load.
+            ``"auto"`` (default) uses ``AutoModel`` — works with any architecture.
+            ``"causal_lm"`` uses ``AutoModelForCausalLM`` — adds ``lm_head`` for
+            logit lens and generation tasks.
+
+    Example:
+        >>> wrapper = TransformersModelWrapper("gpt2")
+        >>> output = wrapper.forward("Hello, world!")
+        >>> activations = wrapper.get_activations("Hello", layers=["transformer.h.0"])
+        >>> # For logit lens (needs lm_head):
+        >>> wrapper = TransformersModelWrapper("gpt2", model_class="causal_lm")
+        >>> wrapper.lm_head  # accessible
+    """
+
+    def __init__(
+        self,
+        model_name: str,
+        device: Optional[str] = None,
+        model_class: str = "auto",
+    ):
         super().__init__()
+        self._model_name = model_name
+        self._model_class = model_class
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
-        self.model.eval()  # Set model to evaluation mode
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
+        loader = _MODEL_CLASSES.get(model_class)
+        if loader is None:
+            raise ValueError(
+                f"Unknown model_class '{model_class}'. "
+                f"Choose from: {list(_MODEL_CLASSES.keys())}"
+            )
+        self.model = loader.from_pretrained(model_name)
+        self.model.eval()
+
+        self._device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self._device)
+
+        # Cache the module dict for fast lookups
+        self._modules_dict: Dict[str, nn.Module] = dict(self.model.named_modules())
 
     def forward(self, inputs: Any, **kwargs) -> Any:
-        tokens = self.tokenizer(inputs, return_tensors='pt', padding=True, truncation=True)
+        """Execute a forward pass. Accepts text strings or pre-tokenized inputs."""
+        if isinstance(inputs, str) or (isinstance(inputs, list) and isinstance(inputs[0], str)):
+            tokens = self.tokenizer(
+                inputs, return_tensors="pt", padding=True, truncation=True
+            ).to(self._device)
+        else:
+            tokens = inputs
+
         with torch.no_grad():
             outputs = self.model(**tokens, **kwargs)
         return outputs
 
-    def get_activations(self, inputs: Any, layers: List[str], return_type: str = "numpy") -> Dict[str, Any]:
-        tokens = self.tokenizer(inputs, return_tensors='pt', padding=True, truncation=True)
-        activations = {}
+    def get_activations(
+        self,
+        inputs: Any,
+        layers: List[str],
+        return_type: str = "numpy",
+    ) -> Dict[str, Any]:
+        """
+        Extract activations from specified layers using forward hooks.
 
-        def hook_fn(module, input, output):
-            layer_name = module.__class__.__name__
-            if layer_name in layers:
-                activations[layer_name] = output.detach()
+        Args:
+            inputs: Text string(s) or pre-tokenized inputs.
+            layers: Layer names matching named_modules() keys
+                    (e.g., ["transformer.h.0", "transformer.h.5.mlp"]).
+            return_type: "numpy" or "torch".
 
+        Returns:
+            Dict mapping each requested layer name to its output tensor/array.
+        """
+        if isinstance(inputs, str) or (isinstance(inputs, list) and isinstance(inputs[0], str)):
+            tokens = self.tokenizer(
+                inputs, return_tensors="pt", padding=True, truncation=True
+            ).to(self._device)
+        else:
+            tokens = inputs
+
+        activations: Dict[str, Any] = {}
         hooks = []
-        for layer in layers:
-            layer_module = self.get_layer_module(layer)
-            hooks.append(layer_module.register_forward_hook(hook_fn))
+
+        for layer_name in layers:
+            module = self.get_layer_module(layer_name)
+
+            def make_hook(name):
+                def hook_fn(module, input, output):
+                    if isinstance(output, tuple):
+                        activations[name] = output[0].detach()
+                    else:
+                        activations[name] = output.detach()
+                return hook_fn
+
+            hooks.append(module.register_forward_hook(make_hook(layer_name)))
 
         with torch.no_grad():
             self.model(**tokens)
@@ -40,29 +128,73 @@ class TransformersModelWrapper(ModelWrapper, ABC):
             return {k: v.cpu().numpy() for k, v in activations.items()}
         return activations
 
-    def get_layer_module(self, layer: str) -> Any:
-        layer_names = self.layer_names
-        if layer in layer_names:
-            return dict(self.model.named_modules())[layer]
-        raise ValueError(f"Layer {layer} not found in model.")
+    def get_layer_module(self, layer: str) -> nn.Module:
+        """Get a named module by its dotted path (e.g., 'transformer.h.5.mlp')."""
+        if layer in self._modules_dict:
+            return self._modules_dict[layer]
+        raise ValueError(
+            f"Layer '{layer}' not found. Available layers: "
+            f"{self.layer_names[:10]}... (use .layer_names for full list)"
+        )
 
     def get_layer_shape(self, layer: str) -> Tuple[int, ...]:
-        layer_module = self.get_layer_module(layer)
-        return layer_module.output_shape[1:]  # Exclude batch size
+        """
+        Infer a layer's output shape by inspecting weight matrices.
+        Falls back to (hidden_size,) if no weights are found.
+        """
+        module = self.get_layer_module(layer)
+        # Try to infer from the last weight parameter
+        for param in reversed(list(module.parameters())):
+            if param.dim() >= 2:
+                return (param.shape[0],)
+            elif param.dim() == 1:
+                return (param.shape[0],)
+        # Fallback to model config hidden size
+        return (self.model.config.hidden_size,)
 
     @property
     def layer_names(self) -> List[str]:
-        return list(self.model.named_modules())
+        """Return all named module paths in the model."""
+        return [name for name, _ in self.model.named_modules() if name]
 
     @property
     def device(self) -> str:
-        return next(self.model.parameters()).device
+        """Return the device string (e.g., 'cpu', 'cuda:0')."""
+        return str(self._device)
 
     @property
     def model_config(self) -> Dict[str, Any]:
+        """Return model metadata from the HuggingFace config."""
+        config = self.model.config
         return {
-            "hidden_size": self.model.config.hidden_size,
-            "num_layers": self.model.config.num_hidden_layers,
-            "vocab_size": self.model.config.vocab_size,
-            "model_type": self.model.config.model_type,
+            "hidden_size": getattr(config, "hidden_size", getattr(config, "n_embd", None)),
+            "num_layers": getattr(config, "num_hidden_layers", getattr(config, "n_layer", None)),
+            "vocab_size": getattr(config, "vocab_size", None),
+            "model_type": getattr(config, "model_type", "unknown"),
+            "model_name": self._model_name,
         }
+
+    def set_eval_mode(self):
+        """Set model to evaluation mode."""
+        self.model.eval()
+
+    def set_train_mode(self):
+        """Set model to training mode."""
+        self.model.train()
+
+    @property
+    def lm_head(self) -> nn.Module:
+        """Return the language model head (requires ``model_class="causal_lm"``)."""
+        head = getattr(self.model, "lm_head", None)
+        if head is None:
+            raise AttributeError(
+                f"Model '{self._model_name}' loaded with model_class='{self._model_class}' "
+                "does not have an lm_head. Use model_class='causal_lm' to access it."
+            )
+        return head
+
+    def __repr__(self) -> str:
+        return (
+            f"TransformersModelWrapper(model='{self._model_name}', "
+            f"device='{self.device}', model_class='{self._model_class}')"
+        )

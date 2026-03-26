@@ -13,11 +13,12 @@ Implements modern training techniques:
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from typing import Dict, Any, List, Optional, Callable, Literal
+from typing import Dict, Any, List, Optional, Callable, Literal, Union
 from dataclasses import dataclass, field
 import time
 
 from .sae import SparseAutoencoder
+from .feature_set import FeatureSet
 from .utils import (
     calc_explained_variance,
     calc_mse_loss,
@@ -500,6 +501,41 @@ class SAETrainer:
                 for i in range(len(l0_per_feature))
             ],
         }
+
+    def get_feature_set(
+        self,
+        model_name: str = "unknown",
+        layer: Union[str, int] = 0,
+    ) -> FeatureSet:
+        """
+        Convert trained SAE into a FeatureSet object.
+
+        Extracts decoder/encoder weights and training statistics into a
+        FeatureSet for downstream analysis and serialization.
+
+        Args:
+            model_name: Name of the source model (for metadata).
+            layer: Layer identifier (for metadata).
+
+        Returns:
+            FeatureSet containing the trained SAE's features.
+        """
+        stats = self.get_stats()
+        per_feature_stats = stats.pop("per_feature_stats", [])
+
+        # Enrich config with model/layer info
+        config = self.sae.get_config()
+        config["model_name"] = model_name
+        config["layer"] = layer
+
+        return FeatureSet(
+            config=config,
+            stats=stats,
+            W_dec=self.sae.W_dec.data.clone(),
+            W_enc=self.sae.W_enc.data.clone() if hasattr(self.sae, "W_enc") and self.sae.W_enc is not None else None,
+            feature_stats=per_feature_stats,
+            metadata={"source": "SAETrainer.get_feature_set"},
+        )
 
     def evaluate(self, dataloader: DataLoader) -> Dict[str, float]:
         """
