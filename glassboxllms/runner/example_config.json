@@ -13,8 +13,10 @@
     "data_files": "specific/file/to/load",
     "split": "train",
     "preprocess": {
-      "max_length": 512,
-      "padding": "max_length"
+      "max_length": {
+        "text_column": "text",
+        "max_len": 512
+      }
     }
   },
   "experiment": {
