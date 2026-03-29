@@ -104,9 +104,8 @@ Applies a sequence of custom transformation functions to text in a column.
     "apply_transform": {
       "text_column": "text",
       "transform_functions": [
-        "remove_urls",
-        "remove_mentions",
-        "expand_contractions"
+        "dummy",
+        {"name": "example_transform", "params": {"prefix": ">>", "suffix": "<<"}}
       ]
     }
   }
@@ -117,6 +116,10 @@ Applies a sequence of custom transformation functions to text in a column.
 - Applies transformation functions in sequence (daisy-chain order)
 - Functions are applied to the specified text column
 - Custom transform functions must be defined elsewhere in your codebase and accessible 
+  - In particular, /runner/preprocessing/custom.py is pre-linked and the standard location to put such functions
+  - See the custom.py file for examples!
+- Parameters for custom functions can be added as seen above
+- Custom functions should take `text: str` as the first argument and return `str`
 
 ---
 
