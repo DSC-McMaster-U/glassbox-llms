@@ -385,7 +385,7 @@ Filters or pads text to minimum length.
 
 ### 9. tokenize_dataset
 
-Tokenizes text using a model's tokenizer and adds token-based columns.
+Tokenizes text using a model's tokenizer and adds token-based columns. This is meant to be a helper transform for max/min token transforms, but it is perfectly accessible via an import if needed directly.
 
 **Trigger:** Presence of `"max_tokens"` OR `"min_tokens"` key in preprocess_config
 
