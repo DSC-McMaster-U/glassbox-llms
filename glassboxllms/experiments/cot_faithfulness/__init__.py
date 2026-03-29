@@ -15,6 +15,7 @@ Usage:
 from glassboxllms.experiments.cot_faithfulness.evaluator import CoTFaithfulnessEvaluator
 from glassboxllms.experiments.cot_faithfulness.tests import truncation_test, error_injection_test
 from glassboxllms.experiments.cot_faithfulness.baselines import BASELINES, get_baseline
+from glassboxllms.experiments.cot_faithfulness.cot_faithfulness import run_experiment
 
 __all__ = [
     "CoTFaithfulnessEvaluator",
@@ -22,4 +23,5 @@ __all__ = [
     "error_injection_test",
     "BASELINES",
     "get_baseline",
+    "run_experiment"
 ]
