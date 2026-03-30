@@ -1,7 +1,11 @@
 from abc import ABC
 from typing import Any, Dict, List, Tuple
+
 import torch
 from transformers import AutoModel, AutoTokenizer
+
+from .base import ModelWrapper
+
 
 class TransformersModelWrapper(ModelWrapper, ABC):
     def __init__(self, model_name: str):
@@ -11,13 +15,19 @@ class TransformersModelWrapper(ModelWrapper, ABC):
         self.model.eval()  # Set model to evaluation mode
 
     def forward(self, inputs: Any, **kwargs) -> Any:
-        tokens = self.tokenizer(inputs, return_tensors='pt', padding=True, truncation=True)
+        tokens = self.tokenizer(
+            inputs, return_tensors="pt", padding=True, truncation=True
+        )
         with torch.no_grad():
             outputs = self.model(**tokens, **kwargs)
         return outputs
 
-    def get_activations(self, inputs: Any, layers: List[str], return_type: str = "numpy") -> Dict[str, Any]:
-        tokens = self.tokenizer(inputs, return_tensors='pt', padding=True, truncation=True)
+    def get_activations(
+        self, inputs: Any, layers: List[str], return_type: str = "numpy"
+    ) -> Dict[str, Any]:
+        tokens = self.tokenizer(
+            inputs, return_tensors="pt", padding=True, truncation=True
+        )
         activations = {}
 
         def hook_fn(module, input, output):

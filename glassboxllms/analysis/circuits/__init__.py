@@ -30,10 +30,12 @@ See Also:
 """
 
 from .graph import CircuitGraph
+from .discovery import CircuitDiscoveryExperiment
 from .node import CircuitEdge, CircuitNode, EdgeType, NodeType
 
 __all__ = [
     "CircuitGraph",
+    "CircuitDiscoveryExperiment",
     "CircuitNode",
     "CircuitEdge",
     "NodeType",
