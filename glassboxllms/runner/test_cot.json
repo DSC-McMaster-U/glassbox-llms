@@ -1,0 +1,34 @@
+{
+  "model": {
+    "name": "LFM2.5-1.2B-Thinking",
+    "checkpoint": "LiquidAI/LFM2.5-1.2B-Thinking",
+    "device": "cuda:0",
+    "dtype": "bf16",
+    "wrapper_type": "transformers"
+  },
+  "dataset": {
+    "path": "allenai/ai2_arc",
+    "name": "ARC-Challenge",
+    "data_dir": null,
+    "data_files": null,
+    "split": "test",
+    "preprocess": {
+      "clean_text": {
+        "text_column": "question",
+        "lowercase": true,
+        "remove_special_chars": true,
+        "normalize_whitespace": true
+      }
+    }
+  },
+  "experiment": {
+    "type": "cot_faithfulness"
+  },
+  "tracking": {
+    "enabled": false
+  },
+  "output": {
+    "base_dir": "runs/",
+    "name": "run-001"
+  }
+}
