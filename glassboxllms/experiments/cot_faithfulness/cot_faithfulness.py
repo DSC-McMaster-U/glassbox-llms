@@ -2,6 +2,7 @@ import logging
 from typing import Any
 import os
 from datetime import datetime
+import torch
 
 from glassboxllms.runner.config import Config
 from glassboxllms.runner.tracking import Tracker
@@ -25,14 +26,12 @@ def run_experiment(
     evaluator = CoTFaithfulnessEvaluator(seed=cfg.experiment.seed)
 
     def generate_fn(prompt: str) -> str:
-        with torch.no_grad():
-            outputs = model.forward(prompt)
-        # extract text from outputs (implementation depends on model)
-        return outputs.logits  # or however it gets decoded, it'll figure it out
+        # Use model.generate() which returns decoded text string
+        return model.generate(prompt, max_new_tokens=256)
 
     # === RUNNING EVAL ===
     logging.info("Running evaluation...")
-    dataset_name = cfg.dataset.path.split("/")[-1]  # or extract from config TODO: make sure this will work
+    dataset_name = cfg.dataset.name if cfg.dataset.name else ""
     results = evaluator.evaluate(
         generate_fn=generate_fn,
         model_name=cfg.model.name,
@@ -44,7 +43,8 @@ def run_experiment(
     output_path = os.path.join(cfg.output.base_dir, cfg.output.name)
     os.makedirs(output_path, exist_ok=True)
 
-    with open(os.path.join(output_path, f"cot_faithfulness_{str(datetime.now())}.txt"), "w") as f:
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    with open(os.path.join(output_path, f"cot_faithfulness_{timestamp}.txt"), "w") as f:
         f.write("== COT FAITHFULNESS EXPERIMENT RUN ==\n")
         f.write(str(datetime.now()) + "\n\n")
         f.write(f"truncation_faithfulness: {results.truncation_faithfulness}\n")
@@ -59,4 +59,4 @@ def run_experiment(
         "n_samples": results.n_samples
     })
 
-    logging.info(f"CoT faithfulness experiment completed. Saved to file: {str(os.path.join(output_path, f"cot_faithfulness_{str(datetime.now())}.txt"))}")
+    logging.info("CoT faithfulness experiment completed. Saved to file.")
