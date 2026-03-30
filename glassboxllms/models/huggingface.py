@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Any, Dict, List, Tuple
 
 import torch
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from .base import ModelWrapper
 
@@ -11,7 +11,7 @@ class TransformersModelWrapper(ModelWrapper, ABC):
     def __init__(self, model_name: str):
         super().__init__()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(model_name)
         self.model.eval()  # Set model to evaluation mode
 
     def forward(self, inputs: Any, **kwargs) -> Any:
@@ -21,6 +21,28 @@ class TransformersModelWrapper(ModelWrapper, ABC):
         with torch.no_grad():
             outputs = self.model(**tokens, **kwargs)
         return outputs
+
+    def generate(self, prompt: str, max_new_tokens: int = 256, **kwargs) -> str:
+        """
+        Cookie cutter generate text function.
+        """
+        tokens = self.tokenizer(
+            prompt, return_tensors="pt", padding=True, truncation=True
+        )
+        tokens = {k: v.to(self.device) for k, v in tokens.items()}
+
+        with torch.no_grad():
+            output_ids = self.model.generate(
+                tokens["input_ids"],
+                attention_mask=tokens.get("attention_mask", None),
+                max_new_tokens=max_new_tokens,
+                pad_token_id=self.tokenizer.pad_token_id if self.tokenizer.pad_token_id is not None else self.tokenizer.eos_token_id,
+                **kwargs
+            )
+
+        # Decode the output, skipping the input prompt
+        generated_text = self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
+        return generated_text
 
     def get_activations(
         self, inputs: Any, layers: List[str], return_type: str = "numpy"

@@ -1,5 +1,5 @@
 from typing import Type
-
+import torch
 from .base import ModelWrapper
 from .huggingface import TransformersModelWrapper
 
@@ -28,6 +28,8 @@ def create_model_wrapper(
             wrapper.model.half()
         elif dtype == "float32":
             wrapper.model.float()
+        elif dtype == "bf16":
+            wrapper.model.to(torch.bfloat16)
         return wrapper
 
     return wrapper_class(checkpoint)
