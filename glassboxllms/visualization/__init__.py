@@ -53,6 +53,7 @@ from .interactive import (
 
 from .adapters import (
     circuit_graph_to_scene_data,
+    cot_result_to_scene_data,
     probe_result_to_scene_data,
     sae_features_to_scene_data,
     steering_result_to_scene_data,
@@ -74,6 +75,7 @@ __all__ = [
     "adapters",
     "scenes",
     "circuit_graph_to_scene_data",
+    "cot_result_to_scene_data",
     "probe_result_to_scene_data",
     "sae_features_to_scene_data",
     "steering_result_to_scene_data",

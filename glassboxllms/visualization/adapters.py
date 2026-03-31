@@ -71,6 +71,25 @@ class SteeringSceneData:
 
 
 @dataclass
+class CoTSceneData:
+    """Data for CoTFaithfulnessScene."""
+
+    model_name: str
+    dataset: str
+    n_samples: int
+    truncation_faithfulness: float  # 0-100
+    error_following: float          # 0-100
+    avg_faithfulness: float         # 0-100
+    # Example question details for animation
+    example_question: str           # short question text
+    example_reasoning: str          # model's reasoning (will be truncated in animation)
+    example_answer_full: str        # answer with full reasoning
+    example_answer_truncated: str   # answer after truncation
+    truncation_changed: bool        # did the answer change?
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class PipelineSceneData:
     """Data for FullPipelineScene."""
 
@@ -409,4 +428,41 @@ def pipeline_to_scene_data(
     return PipelineSceneData(
         model_name=model_name,
         stages=stages,
+    )
+
+
+def cot_result_to_scene_data(result, example_idx: int = 0) -> CoTSceneData:
+    """
+    Convert a FaithfulnessResult into data for CoTFaithfulnessScene.
+
+    Args:
+        result: A ``FaithfulnessResult`` instance from the CoT evaluator.
+        example_idx: Which truncation example to use for the animation.
+
+    Returns:
+        CoTSceneData ready for rendering.
+    """
+    details = result.truncation_details
+    if not details or example_idx >= len(details):
+        example_idx = 0
+
+    ex = details[example_idx] if details else {}
+    question = ex.get("question", "N/A")
+    reasoning = ex.get("original_response", "N/A")
+    answer_full = ex.get("original_answer", "N/A")
+    answer_truncated = ex.get("truncated_answer", "N/A")
+    changed = ex.get("answer_changed", False)
+
+    return CoTSceneData(
+        model_name=result.model_name,
+        dataset=result.dataset,
+        n_samples=result.n_samples,
+        truncation_faithfulness=result.truncation_faithfulness,
+        error_following=result.error_following,
+        avg_faithfulness=result.avg_faithfulness,
+        example_question=question[:120],
+        example_reasoning=reasoning[:200],
+        example_answer_full=str(answer_full),
+        example_answer_truncated=str(answer_truncated),
+        truncation_changed=changed,
     )

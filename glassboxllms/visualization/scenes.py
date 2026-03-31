@@ -74,6 +74,7 @@ from manim import (
 
 from .adapters import (
     CircuitSceneData,
+    CoTSceneData,
     PipelineSceneData,
     ProbeSceneData,
     SAESceneData,
@@ -826,7 +827,211 @@ class SteeringVectorScene(Scene):
 
 
 # ======================================================================
-# 5. FullPipelineScene
+# 5. CoTFaithfulnessScene
+# ======================================================================
+
+
+class CoTFaithfulnessScene(Scene):
+    """
+    Visualize Chain-of-Thought faithfulness: does reasoning drive answers?
+
+    Three acts:
+      1. Setup — show a question and the model's reasoning.
+      2. Truncation test — cut reasoning and compare answers.
+      3. Scoreboard — animated bars for truncation, error, average.
+
+    Set ``self.scene_data`` to a :class:`CoTSceneData`.
+    """
+
+    scene_data: Optional[CoTSceneData] = None
+
+    def get_scene_data(self) -> CoTSceneData:
+        if self.scene_data is not None:
+            return self.scene_data
+        raise ValueError("No scene_data set.")
+
+    def construct(self):
+        _set_cinematic_bg(self)
+        data = self.get_scene_data()
+
+        # --- Title card ---
+        _title_card(
+            self,
+            "CoT Faithfulness",
+            "Does reasoning drive answers?",
+        )
+        _add_watermark(self)
+
+        # ============ Act 1: The Setup (5s) ============
+        q_label = Text("Question:", font_size=22, color=GLASS_GOLD, weight=BOLD)
+        q_label.to_edge(UP, buff=0.5).shift(LEFT * 3)
+
+        q_text = Text(
+            data.example_question[:80] + ("..." if len(data.example_question) > 80 else ""),
+            font_size=18, color=GLASS_LIGHT,
+        )
+        q_text.next_to(q_label, DOWN, buff=0.2, aligned_edge=LEFT)
+
+        self.play(Write(q_label), run_time=0.5)
+        self.play(FadeIn(q_text), run_time=0.6)
+
+        # Show reasoning flowing out
+        r_label = Text("Reasoning:", font_size=20, color=GLASS_TEAL, weight=BOLD)
+        r_label.next_to(q_text, DOWN, buff=0.4, aligned_edge=LEFT)
+        self.play(Write(r_label), run_time=0.4)
+
+        reasoning_lines = []
+        reasoning_text = data.example_reasoning[:160]
+        # Split into ~3 lines of ~55 chars
+        for i in range(0, len(reasoning_text), 55):
+            chunk = reasoning_text[i:i + 55]
+            if chunk:
+                reasoning_lines.append(chunk)
+
+        line_group = VGroup()
+        for i, line in enumerate(reasoning_lines[:3]):
+            t = Text(line, font_size=16, color=GLASS_LIGHT)
+            if i == 0:
+                t.next_to(r_label, DOWN, buff=0.15, aligned_edge=LEFT)
+            else:
+                t.next_to(line_group[-1], DOWN, buff=0.08, aligned_edge=LEFT)
+            line_group.add(t)
+            self.play(Write(t), run_time=0.5)
+
+        self.wait(0.5)
+
+        # ============ Act 2: The Truncation Test (5s) ============
+        # Draw a red cut line through the reasoning
+        if len(line_group) > 0:
+            cut_y = line_group[min(1, len(line_group) - 1)].get_center()[1]
+            cut_line = Line(
+                np.array([-6, cut_y, 0]),
+                np.array([6, cut_y, 0]),
+                color=GLASS_PRIMARY, stroke_width=4,
+            )
+            scissors_label = Text(
+                "TRUNCATED", font_size=16, color=GLASS_PRIMARY, weight=BOLD,
+            )
+            scissors_label.next_to(cut_line, RIGHT, buff=0.2)
+            self.play(Create(cut_line), FadeIn(scissors_label), run_time=0.8)
+
+        # Show answer comparison
+        answers_y = cut_y - 0.8 if len(line_group) > 0 else -1.0
+        full_ans = Text(
+            f"Full CoT answer: {data.example_answer_full[:30]}",
+            font_size=18, color=GLASS_LIGHT,
+        )
+        full_ans.move_to(np.array([-2.5, answers_y, 0]))
+
+        trunc_ans = Text(
+            f"Truncated answer: {data.example_answer_truncated[:30]}",
+            font_size=18, color=GLASS_LIGHT,
+        )
+        trunc_ans.next_to(full_ans, DOWN, buff=0.25, aligned_edge=LEFT)
+
+        self.play(FadeIn(full_ans), run_time=0.6)
+        self.play(FadeIn(trunc_ans), run_time=0.6)
+
+        # Badge
+        if data.truncation_changed:
+            badge_text = "FAITHFUL"
+            badge_color = GLASS_GREEN
+        else:
+            badge_text = "UNFAITHFUL"
+            badge_color = GLASS_PRIMARY
+
+        badge_bg = RoundedRectangle(
+            width=2.5, height=0.6, corner_radius=0.15,
+            fill_color=badge_color, fill_opacity=0.8,
+            stroke_color=badge_color, stroke_width=2,
+        )
+        badge_label = Text(badge_text, font_size=22, color=WHITE, weight=BOLD)
+        badge = VGroup(badge_bg, badge_label)
+        badge_label.move_to(badge_bg.get_center())
+        badge.next_to(trunc_ans, DOWN, buff=0.4)
+
+        self.play(FadeIn(badge), run_time=0.6)
+        self.wait(0.8)
+
+        # ============ Act 3: The Scoreboard (5s) ============
+        # Clear previous elements
+        all_act12 = VGroup(
+            q_label, q_text, r_label, line_group,
+            full_ans, trunc_ans, badge,
+        )
+        if len(line_group) > 0:
+            all_act12.add(cut_line, scissors_label)
+        self.play(FadeOut(all_act12), run_time=0.6)
+
+        # Header
+        score_title = Text(
+            f"Faithfulness Scores -- {data.model_name}",
+            font_size=28, color=GLASS_LIGHT, weight=BOLD,
+        )
+        score_title.to_edge(UP, buff=0.5)
+        self.play(Write(score_title), run_time=0.6)
+
+        bar_data = [
+            ("Truncation", data.truncation_faithfulness, GLASS_TEAL),
+            ("Error Following", data.error_following, GLASS_GOLD),
+            ("Average", data.avg_faithfulness, GLASS_PRIMARY),
+        ]
+
+        bar_max_width = 8.0
+        bar_height = 0.6
+        start_y = 1.2
+
+        for i, (label, value, color) in enumerate(bar_data):
+            y = start_y - i * 1.2
+            # Label
+            lbl = Text(label, font_size=20, color=GLASS_LIGHT)
+            lbl.move_to(np.array([-5.5, y, 0]))
+            lbl.align_to(np.array([-6.0, y, 0]), LEFT)
+
+            # Background bar
+            bg_bar = Rectangle(
+                width=bar_max_width, height=bar_height,
+                fill_color=GLASS_DIM, fill_opacity=0.3,
+                stroke_width=0.5, stroke_color=GLASS_DIM,
+            )
+            bar_left = -1.5
+            bg_bar.move_to(np.array([bar_left + bar_max_width / 2, y, 0]))
+
+            # Filled bar (animate from zero width)
+            fill_width = max((value / 100.0) * bar_max_width, 0.05)
+            fill_bar = Rectangle(
+                width=0.05, height=bar_height,
+                fill_color=color, fill_opacity=0.8,
+                stroke_width=0,
+            )
+            fill_bar.move_to(np.array([bar_left + 0.025, y, 0]))
+
+            # Value label
+            val_label = Text(f"{value:.0f}%", font_size=20, color=GLASS_LIGHT, weight=BOLD)
+            val_label.move_to(np.array([bar_left + fill_width + 0.5, y, 0]))
+
+            self.play(FadeIn(lbl), FadeIn(bg_bar), run_time=0.3)
+            self.play(
+                fill_bar.animate.stretch_to_fit_width(fill_width).move_to(
+                    np.array([bar_left + fill_width / 2, y, 0])
+                ),
+                FadeIn(val_label),
+                run_time=0.8,
+            )
+
+        # Dataset info
+        info = Text(
+            f"Dataset: {data.dataset} | Samples: {data.n_samples}",
+            font_size=16, color=GLASS_DIM,
+        )
+        info.to_edge(DOWN, buff=0.5)
+        self.play(FadeIn(info), run_time=0.4)
+
+        self.wait(2.0)
+
+
+# ======================================================================
+# 6. FullPipelineScene
 # ======================================================================
 
 

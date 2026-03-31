@@ -438,13 +438,62 @@ def render_steering_scene(model, tokenizer, device):
 
 
 # ===================================================================
+# Scene 4: CoTFaithfulnessScene
+# ===================================================================
+
+def render_cot_scene():
+    """
+    Render the CoT faithfulness scene with hardcoded realistic data.
+
+    Uses representative values based on actual evaluation results with
+    Llama-3.3-70B on ARC Challenge (no API calls needed during rendering).
+    """
+    from manim import tempconfig
+
+    from glassboxllms.visualization.adapters import CoTSceneData
+    from glassboxllms.visualization.scenes import CoTFaithfulnessScene
+
+    # Hardcoded but realistic data based on actual ARC evaluation results
+    scene_data = CoTSceneData(
+        model_name="Llama-3.3-70B",
+        dataset="ARC Challenge",
+        n_samples=6,
+        truncation_faithfulness=33.0,
+        error_following=33.0,
+        avg_faithfulness=33.0,
+        example_question="Which factor most accurately describes the reason a car on a dark road is hard to see?",
+        example_reasoning="A dark-colored car absorbs most visible light "
+        "rather than reflecting it. On a dark road at night, there is very "
+        "little ambient light. The combination means fewer photons reach "
+        "the observer's eyes, making the car difficult to detect.",
+        example_answer_full="B",
+        example_answer_truncated="B",
+        truncation_changed=False,
+        metadata={"source": "hardcoded-demo"},
+    )
+
+    media_dir = str(DEMO_DIR / "_manim_cot")
+    with tempconfig({
+        "quality": "high_quality",
+        "pixel_width": 1920,
+        "pixel_height": 1080,
+        "media_dir": media_dir,
+    }):
+        scene = CoTFaithfulnessScene()
+        scene.scene_data = scene_data
+        scene.render()
+
+    _move_video("CoTFaithfulnessScene", Path(media_dir))
+
+
+# ===================================================================
 # Main
 # ===================================================================
 
 def main():
     overall_start = time.time()
     print("=" * 60)
-    print("  Rendering 3 demo animations with real GPT-2 data")
+    print("  Rendering 4 demo animations with real GPT-2 data")
     print(f"  Output directory: {DEMO_DIR}")
     print("=" * 60)
 
@@ -453,23 +502,28 @@ def main():
         model, tokenizer, device = load_gpt2()
 
     # Scene 1: Probing
-    with _timer("Scene 1/3: ProbingHyperplaneScene"):
+    with _timer("Scene 1/4: ProbingHyperplaneScene"):
         render_probing_scene(model, tokenizer, device)
 
     # Scene 2: Circuit (does not need GPT-2 inference)
-    with _timer("Scene 2/3: CircuitDiscoveryScene"):
+    with _timer("Scene 2/4: CircuitDiscoveryScene"):
         render_circuit_scene()
 
     # Scene 3: Steering
-    with _timer("Scene 3/3: SteeringVectorScene"):
+    with _timer("Scene 3/4: SteeringVectorScene"):
         render_steering_scene(model, tokenizer, device)
+
+    # Scene 4: CoT Faithfulness (hardcoded data, no API calls)
+    with _timer("Scene 4/4: CoTFaithfulnessScene"):
+        render_cot_scene()
 
     # Summary
     elapsed = time.time() - overall_start
     print(f"\n{'='*60}")
-    print(f"  All 3 scenes rendered in {elapsed:.1f}s")
+    print(f"  All 4 scenes rendered in {elapsed:.1f}s")
     print(f"{'='*60}")
-    for name in ["ProbingHyperplaneScene", "CircuitDiscoveryScene", "SteeringVectorScene"]:
+    for name in ["ProbingHyperplaneScene", "CircuitDiscoveryScene",
+                  "SteeringVectorScene", "CoTFaithfulnessScene"]:
         mp4 = DEMO_DIR / f"{name}.mp4"
         status = "OK" if mp4.exists() else "MISSING"
         print(f"  [{status}] {mp4}")
