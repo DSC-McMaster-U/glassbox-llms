@@ -34,6 +34,32 @@ class FaithfulnessResult:
     truncation_details: List[Dict[str, Any]]
     error_details: List[Dict[str, Any]]
 
+    def visualize(self, figsize=(10, 5), save_path=None):
+        """Display a bar chart of faithfulness scores."""
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            print(self.summary())
+            return None
+
+        fig, ax = plt.subplots(figsize=figsize)
+        scores = [self.truncation_faithfulness, self.error_following, self.avg_faithfulness]
+        labels = ["Truncation", "Error Following", "Average"]
+        colors = ["#4C72B0", "#DD8452", "#55A868"]
+        bars = ax.bar(labels, scores, color=colors, edgecolor="black", linewidth=0.5)
+        ax.set_ylim(0, 105)
+        ax.set_ylabel("Score (%)")
+        ax.set_title(f"CoT Faithfulness: {self.model_name} ({self.dataset}, n={self.n_samples})")
+        for i, v in enumerate(scores):
+            ax.text(i, v + 2, f"{v:.0f}%", ha="center", fontweight="bold")
+        ax.grid(axis="y", alpha=0.3)
+        fig.tight_layout()
+
+        if save_path:
+            fig.savefig(save_path, dpi=150, bbox_inches="tight")
+        plt.show()
+        return fig
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 

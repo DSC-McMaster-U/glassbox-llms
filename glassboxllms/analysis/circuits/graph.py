@@ -529,6 +529,14 @@ class CircuitGraph:
     # Statistics
     # =========================================================================
     
+    def visualize(self, layout="layer", figsize=(14, 8), node_size=800, font_size=8, save_path=None):
+        """Render the circuit graph using matplotlib + networkx."""
+        from glassboxllms.visualization.plots import plot_circuit_graph
+        fig = plot_circuit_graph(self, layout=layout, figsize=figsize, node_size=node_size, font_size=font_size, save_path=save_path)
+        import matplotlib.pyplot as plt
+        plt.show()
+        return fig
+
     def summary(self) -> Dict[str, Any]:
         """
         Get a summary of the graph structure.

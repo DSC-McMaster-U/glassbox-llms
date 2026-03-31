@@ -30,6 +30,36 @@ class ProbeResult:
             parts.append(f"explained_var={self.explained_variance:.3f}")
         return f"ProbeResult({', '.join(parts)})"
 
+    def visualize(self, metric="accuracy", figsize=(8, 5), save_path=None):
+        """Display a summary bar chart of probe metrics."""
+        try:
+            from glassboxllms.visualization.plots import _require_matplotlib
+            _, plt = _require_matplotlib()
+        except ImportError:
+            print(f"ProbeResult: accuracy={self.accuracy:.3f}, f1={self.f1}, precision={self.precision}, recall={self.recall}")
+            return None
+
+        metrics = {}
+        for name in ["accuracy", "precision", "recall", "f1", "explained_variance"]:
+            val = getattr(self, name, None)
+            if val is not None:
+                metrics[name] = val
+
+        fig, ax = plt.subplots(figsize=figsize)
+        names = list(metrics.keys())
+        values = list(metrics.values())
+        ax.bar(names, values, edgecolor="black", linewidth=0.5)
+        ax.set_ylim(0, max(1.0, max(values) * 1.1))
+        ax.set_ylabel("Score")
+        ax.set_title("Probe Evaluation Metrics")
+        ax.grid(axis="y", alpha=0.3)
+        fig.tight_layout()
+
+        if save_path:
+            fig.savefig(save_path, dpi=150, bbox_inches="tight")
+        plt.show()
+        return fig
+
 
 class BaseProbe(ABC):
     """
