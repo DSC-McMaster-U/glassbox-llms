@@ -94,7 +94,8 @@ class ActivationStore:
                     parts.append(torch.load(filepath, map_location=self.device))
 
         if self._buffer[layer_name]:
-            parts.append(torch.stack(self._buffer[layer_name]))
+            # Use cat instead of stack to handle varying batch sizes
+            parts.append(torch.cat(self._buffer[layer_name], dim=0))
 
         if not parts:
             return torch.empty(0)
