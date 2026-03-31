@@ -85,16 +85,18 @@ from .adapters import (
 # GLASS color palette (consistent with manim_scenes/utils.py)
 # ======================================================================
 
-GLASS_BG = "#1a1a2e"
-GLASS_PRIMARY = "#e94560"
-GLASS_ACCENT = "#0f3460"
-GLASS_GOLD = "#f5a623"
-GLASS_TEAL = "#16c79a"
-GLASS_PURPLE = "#9b59b6"
-GLASS_LIGHT = "#eaf2f8"
-GLASS_DIM = "#4a4a6a"
-GLASS_GREEN = "#2ecc71"
-GLASS_ORANGE = "#e67e22"
+from manim import ManimColor
+
+GLASS_BG = ManimColor("#1a1a2e")
+GLASS_PRIMARY = ManimColor("#e94560")
+GLASS_ACCENT = ManimColor("#0f3460")
+GLASS_GOLD = ManimColor("#f5a623")
+GLASS_TEAL = ManimColor("#16c79a")
+GLASS_PURPLE = ManimColor("#9b59b6")
+GLASS_LIGHT = ManimColor("#eaf2f8")
+GLASS_DIM = ManimColor("#4a4a6a")
+GLASS_GREEN = ManimColor("#2ecc71")
+GLASS_ORANGE = ManimColor("#e67e22")
 
 _NODE_COLORS = {
     "neuron": GLASS_ACCENT,
