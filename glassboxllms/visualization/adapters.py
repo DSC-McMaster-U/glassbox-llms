@@ -448,10 +448,10 @@ def cot_result_to_scene_data(result, example_idx: int = 0) -> CoTSceneData:
 
     ex = details[example_idx] if details else {}
     question = ex.get("question", "N/A")
-    reasoning = ex.get("original_response", "N/A")
-    answer_full = ex.get("original_answer", "N/A")
-    answer_truncated = ex.get("truncated_answer", "N/A")
-    changed = ex.get("answer_changed", False)
+    reasoning = ex.get("full_cot", ex.get("original_response", "N/A"))
+    answer_full = ex.get("original", ex.get("original_answer", "N/A"))
+    answer_truncated = ex.get("truncated", ex.get("truncated_answer", "N/A"))
+    changed = ex.get("changed", ex.get("answer_changed", False))
 
     return CoTSceneData(
         model_name=result.model_name,
