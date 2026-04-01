@@ -501,6 +501,21 @@ class SAETrainer:
             ],
         }
 
+    def visualize(self, metrics=None, figsize=(12, 5), save_path=None):
+        """Plot training curves from the most recent training run."""
+        from glassboxllms.visualization.plots import plot_sae_training_curves
+        import matplotlib.pyplot as plt
+
+        stats = self.get_stats()
+        history = stats.get("training_history", {})
+        if not history:
+            print("No training history available. Run train() first.")
+            return None
+
+        fig = plot_sae_training_curves(history, metrics=metrics, figsize=figsize, save_path=save_path)
+        plt.show()
+        return fig
+
     def evaluate(self, dataloader: DataLoader) -> Dict[str, float]:
         """
         Evaluate the SAE on a validation set.
