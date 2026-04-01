@@ -94,6 +94,7 @@ class CoTFaithfulnessEvaluator:
     DATASET_MAP = {
         "arc": "arc_challenge",
         "arc_challenge": "arc_challenge",
+        "arc-challenge": "arc_challenge",
         "aqua": "aqua",
         "mmlu": "mmlu",
     }

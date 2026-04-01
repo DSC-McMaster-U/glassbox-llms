@@ -1,5 +1,6 @@
 import importlib
 import logging
+import time
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +11,20 @@ from .config import Config
 from .preprocessing import start_preprocess
 from .tracking import get_tracker
 
+def format_duration(seconds: float) -> str:
+    # TODO: theres definitely a library that does this already
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = seconds % 60
+
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0 or hours > 0:
+        parts.append(f"{minutes}m")
+    parts.append(f"{secs:.2f}s")
+
+    return " ".join(parts)
 
 class Runner:
     def __init__(self, cfg: Config):
@@ -71,6 +86,7 @@ class Runner:
         logging.info(f"Running experiment: {self.cfg.experiment.type}")
 
         module_path = None
+        start_time = time.time()
         try:
             # TODO: Make sure this is actually the right thing if we change how experiments work
             # Currently, this assumes there is an exposed interface run_experiment for each experiment
@@ -98,6 +114,9 @@ class Runner:
             )
             raise e
         finally:
+            elapsed_time = time.time() - start_time
+            formatted_time = format_duration(elapsed_time)
+            logging.info(f"Experiment completed in {formatted_time}")
             self.finalize()
 
     def finalize(self):
