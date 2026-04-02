@@ -117,3 +117,11 @@ circuits/*.json
 # Generated demo artifacts
 outputs/
 media/
+!media/
+media/*
+!media/demo/
+media/demo/*
+!media/demo/ProbingHyperplaneScene.mp4
+!media/demo/CircuitDiscoveryScene.mp4
+!media/demo/SteeringVectorScene.mp4
+!media/demo/CoTFaithfulnessScene.mp4
