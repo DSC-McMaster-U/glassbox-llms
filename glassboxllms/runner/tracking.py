@@ -47,13 +47,16 @@ class WandBTracker(Tracker):
     def __init__(
         self,
         project: str,
+        name: Optional[str] = None,
         entity: Optional[str] = None,
         tags: Optional[list] = None,
         config: Optional[Dict] = None,
     ):
         import wandb
 
-        self.run = wandb.init(project=project, entity=entity, tags=tags, config=config)
+        self.run = wandb.init(
+            project=project, name=name, entity=entity, tags=tags, config=config
+        )
 
     def log(self, metrics: Dict[str, Any], step: Optional[int] = None):
         self.run.log(metrics, step=step)
@@ -111,6 +114,7 @@ def get_tracker(cfg: Any) -> Tracker:
     if cfg.tracking.type == "wandb":
         return WandBTracker(
             project=cfg.tracking.project,
+            name=cfg.tracking.name,
             entity=cfg.tracking.entity,
             tags=cfg.tracking.tags,
             config=cfg.tracking.config,
