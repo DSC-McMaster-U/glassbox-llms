@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "glassbox-llms"
+version = "0.1.2"
+description = "Glassbox LLMs is a GDG open-source project exploring the inner workings of large language models. We combine hands-on experiments with the latest research to decode the “black box” of modern AI"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Your Name", email = "you@example.com" }
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.9"
+
+# Runtime dependencies
+dependencies = [
+    "numpy>=1.24.0",
+    "scikit-learn>=1.3.0",
+    "torch>=2.0.0",
+    "transformers>=4.30.0",
+    "wandb>=0.16.0",
+    "mlflow>=2.10.0",
+    "datasets>=3.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+    "build",
+    "twine",
+]
+
+[project.urls]
+Homepage = "https://github.com/DSC-McMaster-U/glassbox-llms"
+Issues = "https://github.com/DSC-McMaster-U/glassbox-llms/issues"
+
+# Tells setuptools where your packages live (the src layout)
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["venv*", "venv.*"]

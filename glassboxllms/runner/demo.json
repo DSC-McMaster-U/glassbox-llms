@@ -1,0 +1,53 @@
+{
+  "model": {
+    "name": "bert-base-uncased",
+    "checkpoint": "google-bert/bert-base-uncased",
+    "device": "cpu",
+    "dtype": "float32",
+    "wrapper_type": "transformers"
+  },
+  "dataset": {
+    "path": "Salesforce/wikitext",
+    "name": "wikitext-103-raw-v1",
+    "data_dir": null,
+    "data_files": null,
+    "split": "test",
+    "preprocess": {
+      "max_length": {
+        "text_column": "text",
+        "max_len": 512
+      },
+      "num_samples": {
+        "count": 1000,
+        "seed": 91455808,
+        "shuffle": true
+      }
+    }
+  },
+  "experiment": {
+    "type": "demo",
+    "parameters": {
+      "lr": 2e-5,
+      "bsz": 8,
+      "epochs": 15
+    },
+    "seed": 67
+  },
+  "tracking": {
+    "enabled": true,
+    "type": "wandb",
+    "project": "glassbox-demo",
+    "entity": "",
+    "tags": ["demo", "training-simulation", "glassbox"],
+    "config": {
+      "optimizer": "adamw-8bit",
+      "lr": 2e-5,
+      "batch_size": 8,
+      "epochs": 10
+    }
+  },
+  "output": {
+    "base_dir": "runs/",
+    "name": "run-001"
+  }
+}
