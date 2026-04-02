@@ -1,9 +1,10 @@
 import logging
-from typing import Any
-import os
-from datetime import datetime
-import time
 import math
+import os
+import random
+import time
+from datetime import datetime
+from typing import Any
 
 from glassboxllms.runner.config import Config
 from glassboxllms.runner.tracking import Tracker
@@ -27,7 +28,9 @@ def run_experiment(cfg: Config, model: Any, dataset: Any, tracker: Tracker):
     # accessing tracker information
     logging.info(f"Tracking Enabled: {cfg.tracking.enabled}")
     if cfg.tracking.enabled:
-        logging.info(f"Tracker Type: {cfg.tracking.type}, Project: {cfg.tracking.project}")
+        logging.info(
+            f"Tracker Type: {cfg.tracking.type}, Project: {cfg.tracking.project}"
+        )
 
     # here's accessing arbitrary parameters provided
     # in the config's experiment's parameters key
@@ -54,7 +57,8 @@ def run_experiment(cfg: Config, model: Any, dataset: Any, tracker: Tracker):
     for epoch in range(num_epochs):
         logging.info(f"\n=== Epoch {epoch + 1}/{num_epochs} ===")
 
-        current_lr = lr * (0.95 ** epoch)
+        lrmult = random.uniform(0.996, 1.007)
+        current_lr = lr * (0.95**epoch) * (lrmult)
 
         epoch_train_loss = 0.0
         epoch_train_correct = 0
@@ -64,11 +68,13 @@ def run_experiment(cfg: Config, model: Any, dataset: Any, tracker: Tracker):
         for step in range(steps_per_epoch):
             base_loss = 2.5 * math.exp(-0.3 * (epoch + step / steps_per_epoch))
             noise = (math.sin(step * 0.5) + math.cos(epoch * 0.3)) * 0.1
-            train_loss = max(0.1, base_loss + noise)
+            random_noise = random.gauss(0, 0.1)
+            train_loss = max(0.1, base_loss + noise + random_noise)
 
             base_acc = 0.85 * (1 - math.exp(-0.5 * (epoch + step / steps_per_epoch)))
             acc_noise = (math.sin(step * 0.3) - math.cos(epoch * 0.2)) * 0.02
-            train_acc = max(0.5, min(0.98, base_acc + acc_noise))
+            random_acc_noise = random.gauss(0, 0.05)
+            train_acc = max(0.5, min(0.98, base_acc + acc_noise + random_acc_noise))
 
             epoch_train_loss += train_loss
             epoch_train_correct += int(train_acc * bsz)
@@ -91,8 +97,10 @@ def run_experiment(cfg: Config, model: Any, dataset: Any, tracker: Tracker):
         avg_train_acc = epoch_train_correct / (steps_per_epoch * bsz)
 
         # Simulate validation (slightly different metrics)
-        avg_val_loss = avg_train_loss * 1.05 + 0.02
-        avg_val_acc = avg_train_acc * 0.98
+        val_loss_noise = random.gauss(0, 0.06)
+        val_acc_noise = random.gauss(0, 0.005)
+        avg_val_loss = avg_train_loss * 1.05 + 0.02 + val_loss_noise
+        avg_val_acc = avg_train_acc * 0.98 + val_acc_noise
 
         # Store for final summary
         train_losses.append(avg_train_loss)
@@ -111,8 +119,12 @@ def run_experiment(cfg: Config, model: Any, dataset: Any, tracker: Tracker):
         }
         tracker.log(epoch_metrics, step=final_global_step)
 
-        logging.info(f"Epoch {epoch + 1} - Train Loss: {avg_train_loss:.4f}, Train Acc: {avg_train_acc:.4f}")
-        logging.info(f"           Val Loss: {avg_val_loss:.4f}, Val Acc: {avg_val_acc:.4f}")
+        logging.info(
+            f"Epoch {epoch + 1} - Train Loss: {avg_train_loss:.4f}, Train Acc: {avg_train_acc:.4f}"
+        )
+        logging.info(
+            f"           Val Loss: {avg_val_loss:.4f}, Val Acc: {avg_val_acc:.4f}"
+        )
 
     # Final summary metrics
     final_metrics = {
@@ -153,8 +165,12 @@ def run_experiment(cfg: Config, model: Any, dataset: Any, tracker: Tracker):
         f.write(f"  Best Val Accuracy: {max(val_accs):.4f}\n")
         f.write(f"  Best Val Loss: {min(val_losses):.4f}\n\n")
         f.write(f"Epoch-by-Epoch Summary:\n")
-        for i, (tl, vl, ta, va) in enumerate(zip(train_losses, val_losses, train_accs, val_accs)):
-            f.write(f"  Epoch {i+1}: Train Loss={tl:.4f}, Val Loss={vl:.4f}, Train Acc={ta:.4f}, Val Acc={va:.4f}\n")
+        for i, (tl, vl, ta, va) in enumerate(
+            zip(train_losses, val_losses, train_accs, val_accs)
+        ):
+            f.write(
+                f"  Epoch {i + 1}: Train Loss={tl:.4f}, Val Loss={vl:.4f}, Train Acc={ta:.4f}, Val Acc={va:.4f}\n"
+            )
 
     logging.info(f"Experiment summary saved to {output_path}")
     logging.info("--- Dummy experiment completed! ---")

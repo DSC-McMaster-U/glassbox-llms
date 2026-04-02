@@ -77,6 +77,7 @@ The configuration is defined in `config.py` and supports YAML or JSON formats:
     "enabled": true,
     "type": "wandb",
     "project": "my-project",
+    "name": "name",
     "entity": "my-entity",
     "tags": ["tag1", "tag2"],
     "config": {}

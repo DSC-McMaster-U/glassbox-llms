@@ -6,6 +6,7 @@ processes experiment parameters, model settings, dataset configurations, trackin
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
 import torch
 import yaml
 from pydantic import BaseModel, Field, field_validator
@@ -52,6 +53,7 @@ class TrackingConfig(BaseModel):
     enabled: bool = False
     type: Optional[str] = None  # this will be "wandb" or "mlflow"
     project: Optional[str] = None
+    name: Optional[str] = None
     entity: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
     config: Dict[str, Any] = Field(default_factory=dict)
