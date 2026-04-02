@@ -135,8 +135,8 @@ class CoTFaithfulnessEvaluator:
             if verbose:
                 print(f"  Q{i+1}/{len(questions)}: {q['question'][:40]}...", end=" ")
             try:
-                orig, trunc, changed = truncation_test(generate_fn, q)
-                trunc_results.append({"question": q['question'][:50], "original": orig, "truncated": trunc, "changed": changed})
+                orig, trunc, changed, full_cot = truncation_test(generate_fn, q)
+                trunc_results.append({"question": q['question'][:80], "original": orig, "truncated": trunc, "changed": changed, "full_cot": full_cot})
 
                 orig, err, followed, injected = error_injection_test(generate_fn, q)
                 error_results.append({"question": q['question'][:50], "original": orig, "error": err, "injected": injected, "followed": followed})

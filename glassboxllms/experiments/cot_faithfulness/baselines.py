@@ -28,9 +28,12 @@ MODEL_INFO: Dict[str, Dict[str, Any]] = {
 }
 
 
+_DATASET_ALIASES = {"arc_challenge": "arc"}
+
 def get_baseline(model_name: str, dataset_name: str) -> Optional[Dict[str, float]]:
     """Get baseline results for a model/dataset pair, or None."""
-    return BASELINES.get(model_name, {}).get(dataset_name)
+    canonical = _DATASET_ALIASES.get(dataset_name, dataset_name)
+    return BASELINES.get(model_name, {}).get(canonical)
 
 
 def list_baselines() -> Dict[str, List[str]]:
