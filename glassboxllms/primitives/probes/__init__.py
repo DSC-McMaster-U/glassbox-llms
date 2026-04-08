@@ -15,4 +15,4 @@ from .linear import LinearProbe, ProbeResult
 from .nonlinear import NonLinearProbe
 from .activation_store import ActivationStore
 
-__all__ = ["BaseProbe", "LinearProbe", "ProbeResult", "ActivationStore"]
+__all__ = ["BaseProbe", "LinearProbe", "ProbeResult", "ActivationStore", "NonLinearProbe"]
